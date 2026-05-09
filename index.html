@@ -1157,238 +1157,105 @@
 }
     
 
-/* ============================================================
-   [FORUM-V3] 微信模拟器论坛：参考 QQ.html 的安全区/分页/管理思路
-   ============================================================ */
-:root {
-    --forum-bg: #ffffff;
-    --forum-text: #000000;
-    --forum-gray: #8e8e93;
-    --forum-soft: #f5f5f7;
-    --forum-line: #eeeeee;
-    --forum-safe-gap: 0px; /* 微信模拟器已有独立 status-bar，论坛页不再 fixed 到 body 顶部 */
+/* ========== [FORUM-FULL] 论坛完整页面：iOS 极简黑白主题 ========== */
+.forum-page{
+    --forum-bg:#ffffff;--forum-ink:#000000;--forum-muted:#8e8e93;--forum-line:#ececef;--forum-soft:#f7f7f8;--forum-card:#ffffff;
+    background:var(--forum-bg);color:var(--forum-ink);letter-spacing:-0.01em;
 }
-.forum-page {
-    background: var(--forum-bg);
-    color: var(--forum-text);
+.forum-page *{box-sizing:border-box;}
+.forum-page button,.forum-page input,.forum-page textarea,.forum-page select{font:inherit;}
+.forum-page input,.forum-page textarea{user-select:text;-webkit-user-select:text;}
+.forum-ios-nav{
+    height:58px;padding-top:10px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;
+    border-bottom:0.5px solid var(--forum-line);background:rgba(255,255,255,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
 }
-.forum-shell {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: var(--forum-bg);
-    overflow: hidden;
+.forum-ios-title{font-size:17px;font-weight:800;line-height:1;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.forum-back-btn{position:absolute;left:12px;bottom:7px;}
+.forum-top-actions{position:absolute;right:12px;bottom:7px;display:flex;align-items:center;gap:8px;}
+.forum-icon-btn,.forum-mini-btn{
+    border:0.5px solid var(--forum-line);background:var(--forum-soft);color:var(--forum-ink);border-radius:999px;height:32px;min-width:32px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;line-height:1;padding:0 10px;white-space:nowrap;flex-shrink:0;
 }
-.forum-topbar {
-    min-height: 54px;
-    padding: var(--forum-safe-gap) 14px 0 14px;
-    border-bottom: 0.5px solid var(--forum-line);
-    background: rgba(255,255,255,0.96);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-    z-index: 20;
+.forum-icon-btn{width:32px;padding:0;}
+.forum-icon-btn svg,.forum-mini-btn svg{width:17px;height:17px;fill:currentColor;flex-shrink:0;}
+.forum-mini-btn.danger{color:#000;background:#fff;border-color:#d1d1d6;}
+.forum-main-shell{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;}
+.forum-management-panel{display:none;flex-shrink:0;max-height:46vh;overflow-y:auto;padding:12px 14px 10px;background:#fff;border-bottom:0.5px solid var(--forum-line);}
+.forum-management-panel.show{display:block;}
+.forum-preset-row,.forum-inline-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.forum-field{margin-bottom:10px;}
+.forum-label{font-size:11px;font-weight:800;color:var(--forum-muted);margin:0 0 6px 2px;}
+.forum-input,.forum-textarea,.forum-select{
+    width:100%;border:0.5px solid var(--forum-line);background:var(--forum-soft);color:var(--forum-ink);border-radius:14px;
+    padding:10px 12px;font-size:13px;line-height:1.35;outline:none;min-height:38px;
 }
-.forum-title {
-    font-size: 17px;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: 0.2px;
-}
-.forum-nav-actions {
-    position: absolute;
-    right: 10px;
-    bottom: 8px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-.forum-nav-left {
-    position: absolute;
-    left: 10px;
-    bottom: 8px;
-    display: flex;
-    align-items: center;
-}
-.forum-icon-btn, .forum-back-btn, .forum-publish-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: none;
-    background: var(--forum-soft);
-    color: var(--forum-text);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 800;
-    line-height: 1;
-    flex-shrink: 0;
-}
-.forum-publish-btn {
-    width: auto;
-    min-width: 52px;
-    padding: 0 14px;
-    border-radius: 18px;
-    background: #000;
-    color: #fff;
-    font-size: 14px;
-}
-.forum-icon-btn:active, .forum-back-btn:active, .forum-publish-btn:active { opacity: .55; }
-.forum-tabs {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding: 8px 12px 9px;
-    background: #fff;
-    border-bottom: 0.5px solid var(--forum-line);
-    flex-shrink: 0;
-}
-.forum-chip {
-    height: 22px;
-    min-width: 40px;
-    max-width: 96px;
-    border-radius: 999px;
-    background: var(--forum-soft);
-    color: var(--forum-text);
-    border: 0.5px solid transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 0 8px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.forum-chip.active { background: #000; color: #fff; }
-.forum-chip .chip-x {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    opacity: .65;
-}
-.forum-content {
-    flex: 1;
-    overflow-y: auto;
-    background: #fff;
-    padding-bottom: 76px;
-}
-.forum-post {
-    padding: 14px 16px 12px;
-    border-bottom: 0.5px solid var(--forum-line);
-    background: #fff;
-}
-.forum-post-head {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-}
-.forum-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #000;
-    color: #fff;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    font-weight: 800;
-    flex-shrink: 0;
-}
-.forum-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
-.forum-post-main { flex: 1; min-width: 0; }
-.forum-post-meta { display:flex; align-items:center; gap:6px; color:var(--forum-gray); font-size:11px; margin-bottom:4px; }
-.forum-post-author { color:#000; font-size:14px; font-weight:800; max-width: 130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.forum-post-title { font-size:15px; font-weight:800; line-height:1.35; margin:4px 0 5px; }
-.forum-post-body { font-size:14px; line-height:1.55; white-space:pre-wrap; user-select:text; }
-.forum-media-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-top:10px; }
-.forum-media-cell { aspect-ratio:1/1; border-radius:10px; overflow:hidden; background:var(--forum-soft); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--forum-gray); padding:8px; text-align:center; line-height:1.3; }
-.forum-media-cell img { width:100%; height:100%; object-fit:cover; }
-.forum-actions-row { display:flex; align-items:center; justify-content:space-around; margin-top:10px; color:var(--forum-gray); font-size:12px; }
-.forum-empty { text-align:center; color:var(--forum-gray); font-size:13px; padding:54px 20px; line-height:1.7; }
-.forum-fab {
-    position: absolute;
-    right: 18px;
-    bottom: 84px;
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    border: none;
-    background: #000;
-    color: #fff;
-    font-size: 30px;
-    font-weight: 300;
-    line-height: 1;
-    box-shadow: 0 10px 24px rgba(0,0,0,.18);
-    z-index: 25;
-}
-.forum-inner-dock {
-    height: 58px;
-    border-top: 0.5px solid var(--forum-line);
-    background: rgba(255,255,255,.97);
-    display:flex;
-    align-items:center;
-    justify-content:space-around;
-    flex-shrink: 0;
-    z-index: 20;
-}
-.forum-dock-item { flex:1; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--forum-gray); gap:3px; font-size:10px; font-weight:700; }
-.forum-dock-icon { font-size:20px; line-height:1; }
-.forum-dock-item.active { color:#000; }
-.forum-panel { display:none; height:100%; flex-direction:column; min-height:0; position:relative; }
-.forum-panel.active { display:flex; }
-.forum-search-row { display:flex; gap:8px; align-items:center; padding:10px 12px; border-bottom:0.5px solid var(--forum-line); background:#fff; }
-.forum-search-row input { flex:1; height:34px; border:none; outline:none; border-radius:17px; background:var(--forum-soft); padding:0 14px; font-size:14px; }
-.forum-hot-item, .forum-dm-item { padding:14px 16px; border-bottom:0.5px solid var(--forum-line); display:flex; align-items:center; gap:12px; }
-.forum-rank { width:22px; height:22px; border-radius:50%; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; flex-shrink:0; }
-.forum-hot-text, .forum-dm-text { flex:1; min-width:0; }
-.forum-hot-title, .forum-dm-name { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.forum-hot-sub, .forum-dm-sub { font-size:12px; color:var(--forum-gray); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.forum-profile-cover { height:128px; background:linear-gradient(135deg,#111,#777); position:relative; flex-shrink:0; }
-.forum-profile-card { padding:0 16px 12px; border-bottom:0.5px solid var(--forum-line); background:#fff; }
-.forum-profile-row { display:flex; align-items:flex-end; gap:12px; transform:translateY(-24px); margin-bottom:-14px; }
-.forum-profile-avatar { width:72px; height:72px; border-radius:50%; border:4px solid #fff; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:24px; font-weight:900; flex-shrink:0; }
-.forum-profile-avatar img { width:100%; height:100%; object-fit:cover; }
-.forum-profile-name { font-size:21px; font-weight:900; }
-.forum-profile-id { font-size:12px; color:var(--forum-gray); margin-top:2px; }
-.forum-profile-bio { color:var(--forum-gray); font-size:12px; margin:6px 0 10px; }
-.forum-stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; margin-top:8px; }
-.forum-stat-num { font-size:16px; font-weight:900; }
-.forum-stat-label { font-size:11px; color:var(--forum-gray); }
-.forum-profile-tabs { display:flex; height:42px; border-bottom:0.5px solid var(--forum-line); }
-.forum-profile-tabs button { flex:1; border:none; background:#fff; font-size:14px; font-weight:800; color:var(--forum-gray); }
-.forum-profile-tabs button.active { color:#000; }
-.forum-form-area { flex:1; overflow-y:auto; padding:14px 16px 88px; background:#fff; }
-.forum-author-line { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-.forum-author-detail { font-size:12px; color:var(--forum-gray); margin-top:2px; }
-.forum-input, .forum-textarea, .forum-select { width:100%; border:none; outline:none; background:var(--forum-soft); border-radius:12px; padding:11px 12px; font-size:14px; color:#000; }
-.forum-textarea { min-height:110px; resize:none; line-height:1.5; user-select:text; }
-.forum-form-group { margin-bottom:12px; }
-.forum-form-group label { display:block; font-size:12px; color:var(--forum-gray); font-weight:800; margin-bottom:6px; }
-.forum-tool-row { display:flex; gap:10px; align-items:center; margin:12px 0; }
-.forum-tool-btn { height:34px; padding:0 13px; border:none; border-radius:17px; background:var(--forum-soft); color:#000; font-size:13px; font-weight:800; }
-.forum-preview-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:8px; }
-.forum-manage-section { padding:14px 16px; border-bottom:8px solid var(--forum-soft); background:#fff; }
-.forum-mini-actions { display:flex; gap:8px; align-items:center; }
-.forum-contact-check { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--forum-line); }
-.forum-contact-check:last-child { border-bottom:none; }
-.forum-contact-name { font-size:14px; font-weight:700; }
-.forum-contact-sub { color:var(--forum-gray); font-size:12px; margin-top:2px; }
-.forum-contact-check input { width:18px; height:18px; accent-color:#000; }
-.forum-two-col { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.forum-danger-btn { width:100%; height:38px; border:none; border-radius:12px; background:#000; color:#fff; font-size:14px; font-weight:800; }
-.forum-inline-note { color:var(--forum-gray); font-size:12px; line-height:1.5; margin-top:6px; }
-#forum-image-upload { display:none; }
+.forum-textarea{min-height:72px;resize:vertical;}
+.forum-char-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.forum-char-option{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px;border:0.5px solid var(--forum-line);border-radius:14px;background:var(--forum-soft);font-size:13px;font-weight:650;}
+.forum-char-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.forum-char-option input{accent-color:#000;flex-shrink:0;}
+.forum-segment-strip{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:8px 12px 7px;border-bottom:0.5px solid var(--forum-line);background:rgba(255,255,255,.98);flex-shrink:0;}
+.forum-chip{height:22px;min-width:0;border:0.5px solid var(--forum-line);border-radius:999px;background:var(--forum-soft);padding:0 7px 0 10px;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#111;white-space:nowrap;}
+.forum-chip.active{background:#000;color:#fff;border-color:#000;}
+.forum-chip-x{width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;opacity:.72;}
+.forum-chip-add{width:22px;padding:0;justify-content:center;font-size:15px;}
+.forum-view-stack{position:relative;flex:1;min-height:0;overflow:hidden;background:#fff;}
+.forum-view{display:none;height:100%;overflow-y:auto;background:#fff;}
+.forum-view.active{display:block;}
+.forum-post-list{padding-bottom:86px;}
+.forum-post{display:flex;gap:10px;padding:14px 14px 12px;border-bottom:0.5px solid var(--forum-line);background:#fff;}
+.forum-avatar{width:36px;height:36px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;overflow:hidden;flex-shrink:0;}
+.forum-avatar img{width:100%;height:100%;object-fit:cover;}
+.forum-post-body{min-width:0;flex:1;}
+.forum-post-head{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.forum-author{font-size:14px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.forum-post-sub{font-size:11px;color:var(--forum-muted);white-space:nowrap;}
+.forum-post-title{font-size:15px;font-weight:850;line-height:1.35;margin:5px 0 4px;word-break:break-word;}
+.forum-post-text{font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:#111;}
+.forum-post-images{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;}
+.forum-post-image{aspect-ratio:1/1;border-radius:12px;background:var(--forum-soft);border:0.5px solid var(--forum-line);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:#555;line-height:1.35;text-align:center;padding:8px;}
+.forum-post-image img{width:100%;height:100%;object-fit:cover;}
+.forum-post-actions{display:flex;justify-content:space-between;gap:8px;margin-top:10px;color:var(--forum-muted);font-size:12px;font-weight:750;}
+.forum-post-actions span{display:inline-flex;align-items:center;gap:3px;}
+.forum-floating-plus{position:absolute;right:18px;bottom:76px;width:52px;height:52px;border-radius:50%;border:none;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.18);z-index:8;}
+.forum-floating-plus svg{width:26px;height:26px;fill:#fff;}
+.forum-dock{height:66px;display:flex;align-items:center;justify-content:space-around;border-top:0.5px solid var(--forum-line);background:rgba(255,255,255,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);flex-shrink:0;padding-bottom:6px;}
+.forum-dock-item{height:100%;flex:1;border:none;background:transparent;color:var(--forum-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:750;}
+.forum-dock-item svg{width:23px;height:23px;fill:currentColor;}
+.forum-dock-item.active{color:#000;}
+.forum-hot-head{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:0.5px solid var(--forum-line);position:sticky;top:0;background:#fff;z-index:2;}
+.forum-search{flex:1;border:0.5px solid var(--forum-line);border-radius:999px;background:var(--forum-soft);height:36px;padding:0 13px;font-size:14px;outline:none;}
+.forum-hot-item,.forum-dm-item{display:flex;align-items:center;gap:10px;padding:14px;border-bottom:0.5px solid var(--forum-line);}
+.forum-rank{width:24px;text-align:center;font-weight:900;color:#000;}
+.forum-hot-title{font-size:14px;font-weight:850;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.forum-hot-count{font-size:12px;color:var(--forum-muted);}
+.forum-dm-content{flex:1;min-width:0;}
+.forum-dm-name{font-size:14px;font-weight:850;margin-bottom:3px;}
+.forum-dm-snippet{font-size:12px;color:var(--forum-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.forum-dm-time{font-size:11px;color:var(--forum-muted);}
+.forum-mine-cover{height:150px;background:#000;position:relative;overflow:hidden;}
+.forum-mine-cover img{width:100%;height:100%;object-fit:cover;}
+.forum-mine-card{position:relative;padding:0 16px 12px;border-bottom:0.5px solid var(--forum-line);background:#fff;}
+.forum-mine-top{display:flex;align-items:flex-end;gap:12px;margin-top:-32px;}
+.forum-mine-avatar{width:64px;height:64px;border-radius:50%;border:3px solid #fff;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:900;flex-shrink:0;}
+.forum-mine-avatar img{width:100%;height:100%;object-fit:cover;}
+.forum-mine-name{font-size:21px;font-weight:900;margin-bottom:5px;}
+.forum-mine-join{font-size:12px;color:var(--forum-muted);display:flex;align-items:center;gap:4px;margin-top:6px;}
+.forum-mine-stats{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--forum-muted);}
+.forum-mine-stats b{font-size:16px;color:#000;margin-right:3px;}
+.forum-mine-tabs{display:flex;border-bottom:0.5px solid var(--forum-line);}
+.forum-mine-tabs button{flex:1;height:42px;border:none;background:#fff;font-size:14px;font-weight:850;color:var(--forum-muted);}
+.forum-mine-tabs button.active{color:#000;}
+.forum-empty{text-align:center;color:var(--forum-muted);font-size:13px;padding:42px 16px;line-height:1.7;}
+.forum-compose-body{flex:1;overflow-y:auto;padding:14px;background:#fff;}
+.forum-compose-user{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.forum-compose-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.forum-compose-thumb{position:relative;aspect-ratio:1/1;border-radius:14px;border:0.5px solid var(--forum-line);background:var(--forum-soft);overflow:hidden;}
+.forum-compose-thumb img{width:100%;height:100%;object-fit:cover;}
+.forum-image-note{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;font-size:11px;line-height:1.35;color:#333;}
+.forum-compose-remove{position:absolute;right:5px;top:5px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.72);color:#fff;font-size:14px;line-height:20px;display:flex;align-items:center;justify-content:center;}
+.forum-hidden-input{display:none;}
+.forum-modal-field{margin-top:10px;}
 
     </style>
 </head>
@@ -2175,166 +2042,62 @@
 
     
 
-
-        <!-- ========== [FORUM-V3] 论坛主页面：参考 QQ.html 的分页/安全区思路，适配微信模拟器 ========== -->
+        <!-- ========== [FORUM-FULL] 论坛完整页面 ========== -->
         <div id="page-forum" class="page forum-page">
-            <div class="forum-shell">
-                <div id="forum-panel-home" class="forum-panel active">
-                    <div class="forum-topbar">
-                        <div class="forum-nav-left"><button class="forum-back-btn" onclick="closeForum()">‹</button></div>
-                        <div class="forum-title">论坛</div>
-                        <div class="forum-nav-actions">
-                            <button class="forum-icon-btn" onclick="refreshForumPosts(true)">↻</button>
-                            <button class="forum-icon-btn" onclick="openForumManage()">⚙</button>
-                        </div>
-                    </div>
-                    <div class="forum-tabs" id="forum-group-tabs"></div>
-                    <div class="forum-content" id="forum-post-list"></div>
-                    <button class="forum-fab" onclick="openForumComposer()">+</button>
+            <div class="forum-ios-nav">
+                <button class="forum-icon-btn forum-back-btn" onclick="closeForum()" aria-label="返回"><svg viewBox="0 0 24 24"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg></button>
+                <div class="forum-ios-title" id="forum-nav-title">首页</div>
+                <div class="forum-top-actions" id="forum-nav-actions">
+                    <button class="forum-icon-btn" onclick="refreshForumPosts()" aria-label="刷新"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z"/></svg></button>
+                    <button class="forum-icon-btn" onclick="toggleForumManage()" aria-label="管理论坛"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.3 7.3 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.22.09.48 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"/></svg></button>
                 </div>
-
-                <div id="forum-panel-hot" class="forum-panel">
-                    <div class="forum-topbar">
-                        <div class="forum-title">热搜</div>
-                        <div class="forum-nav-actions"><button class="forum-icon-btn" onclick="renderForumHot(true)">↻</button></div>
+            </div>
+            <div class="forum-main-shell">
+                <div id="forum-management-panel" class="forum-management-panel">
+                    <div class="forum-preset-row">
+                        <select id="forum-preset-select" class="forum-select" onchange="loadForumPreset()"><option value="">选择论坛预设</option></select>
+                        <button class="forum-icon-btn" onclick="saveForumPreset()" aria-label="保存预设"><svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM6 5h9v4H6z"/></svg></button>
+                        <button class="forum-icon-btn" onclick="deleteForumPreset()" aria-label="删除预设"><svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zm3-9h2v8H9zm4 0h2v8h-2zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
                     </div>
-                    <div class="forum-search-row">
-                        <input id="forum-hot-search" placeholder="搜索热搜 / 帖子" oninput="renderForumHot(false)">
-                        <button class="forum-icon-btn" onclick="renderForumHot(true)">↻</button>
-                    </div>
-                    <div class="forum-content" id="forum-hot-list"></div>
+                    <div class="forum-field"><div class="forum-label">论坛世界观</div><textarea id="forum-worldview" class="forum-textarea" placeholder="输入论坛世界观，不限制字数" oninput="saveForumConfig()"></textarea></div>
+                    <div class="forum-field"><div class="forum-label">关联世界书</div><select id="forum-worldbook-select" class="forum-select" onchange="saveForumConfig()"><option value="">不关联</option></select></div>
+                    <div class="forum-field"><div class="forum-label">user 姓名</div><input id="forum-user-name" class="forum-input" placeholder="user姓名" oninput="saveForumConfig()"></div>
+                    <div class="forum-field"><div class="forum-label">user 设定内容</div><textarea id="forum-user-setting" class="forum-textarea" placeholder="输入user设定，不限制字数" oninput="saveForumConfig()"></textarea></div>
+                    <div class="forum-field"><div class="forum-label">参与论坛 char</div><div id="forum-char-list" class="forum-char-list"></div></div>
+                    <div class="forum-field"><div class="forum-label">论坛 NPC</div><textarea id="forum-npc" class="forum-textarea" placeholder="论坛NPC，不限制字数" oninput="saveForumConfig()"></textarea></div>
+                    <div class="forum-field"><div class="forum-label">关系网</div><textarea id="forum-relationship" class="forum-textarea" placeholder="关系网，不限制字数" oninput="saveForumConfig()"></textarea></div>
+                    <button class="forum-mini-btn danger" style="width:100%;" onclick="clearForumPosts()">清空所有帖子</button>
                 </div>
-
-                <div id="forum-panel-dm" class="forum-panel">
-                    <div class="forum-topbar">
-                        <div class="forum-title">私信</div>
-                        <div class="forum-nav-actions"><button class="forum-icon-btn" onclick="renderForumDM(true)">↻</button></div>
-                    </div>
-                    <div class="forum-content" id="forum-dm-list"></div>
+                <div id="forum-group-tabs" class="forum-segment-strip"></div>
+                <div class="forum-view-stack">
+                    <div id="forum-view-home" class="forum-view active"><div id="forum-post-list" class="forum-post-list"></div><button class="forum-floating-plus" onclick="openForumCompose()" aria-label="发帖"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg></button></div>
+                    <div id="forum-view-hot" class="forum-view"><div class="forum-hot-head"><input id="forum-hot-search" class="forum-search" placeholder="搜索热搜" oninput="renderForumHot()"><button class="forum-icon-btn" onclick="refreshForumPosts()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z"/></svg></button></div><div id="forum-hot-list"></div></div>
+                    <div id="forum-view-dm" class="forum-view"><div id="forum-dm-list"></div></div>
+                    <div id="forum-view-mine" class="forum-view"><div id="forum-mine-content"></div></div>
                 </div>
-
-                <div id="forum-panel-me" class="forum-panel">
-                    <div class="forum-topbar">
-                        <div class="forum-title">我的</div>
-                    </div>
-                    <div class="forum-content" id="forum-me-content"></div>
-                </div>
-
-                <div class="forum-inner-dock">
-                    <div class="forum-dock-item active" onclick="switchForumTab('home')"><div class="forum-dock-icon">⌂</div><div>首页</div></div>
-                    <div class="forum-dock-item" onclick="switchForumTab('hot')"><div class="forum-dock-icon">⌕</div><div>热搜</div></div>
-                    <div class="forum-dock-item" onclick="switchForumTab('dm')"><div class="forum-dock-icon">✉</div><div>私信</div></div>
-                    <div class="forum-dock-item" onclick="switchForumTab('me')"><div class="forum-dock-icon">◉</div><div>我的</div></div>
+                <div class="forum-dock">
+                    <button class="forum-dock-item active" onclick="switchForumDock('home')"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>首页</span></button>
+                    <button class="forum-dock-item" onclick="switchForumDock('hot')"><svg viewBox="0 0 24 24"><path d="M13 3s1 3-1 5c-1.4 1.4-3 2.5-3 5a3 3 0 0 0 6 0c0-1-.4-1.9-1-2.6 2.8 1.2 5 3.5 5 6.6A7 7 0 0 1 5 17c0-4 3.5-6.6 5.2-8.5C12 6.5 13 3 13 3z"/></svg><span>热搜</span></button>
+                    <button class="forum-dock-item" onclick="switchForumDock('dm')"><svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg><span>私信</span></button>
+                    <button class="forum-dock-item" onclick="switchForumDock('mine')"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>我的</span></button>
                 </div>
             </div>
         </div>
 
+        <!-- ========== [FORUM-COMPOSE] 发帖页面 ========== -->
         <div id="page-forum-compose" class="page forum-page">
-            <div class="forum-shell">
-                <div class="forum-topbar">
-                    <div class="forum-nav-left"><button class="forum-back-btn" onclick="closeForumComposer()">‹</button></div>
-                    <div class="forum-title">发帖</div>
-                    <div class="forum-nav-actions"><button class="forum-publish-btn" onclick="publishForumPost()">发布</button></div>
-                </div>
-                <div class="forum-form-area">
-                    <div class="forum-author-line">
-                        <div class="forum-avatar" id="forum-compose-avatar">我</div>
-                        <div>
-                            <div class="forum-post-author" id="forum-compose-name">微信用户</div>
-                            <div class="forum-author-detail" id="forum-compose-time">现在</div>
-                        </div>
-                    </div>
-                    <div class="forum-form-group">
-                        <label>分组</label>
-                        <select id="forum-compose-group" class="forum-select"></select>
-                    </div>
-                    <div class="forum-form-group">
-                        <label>帖子标题</label>
-                        <input id="forum-compose-title" class="forum-input" placeholder="输入标题">
-                    </div>
-                    <div class="forum-form-group">
-                        <label>正文</label>
-                        <textarea id="forum-compose-body" class="forum-textarea" placeholder="写点什么……"></textarea>
-                    </div>
-                    <div class="forum-tool-row">
-                        <button class="forum-tool-btn" onclick="addForumTextImage()">相机 · 文字描述图</button>
-                        <button class="forum-tool-btn" onclick="document.getElementById('forum-image-upload').click()">图片 · 真实图片</button>
-                        <input id="forum-image-upload" type="file" accept="image/*" multiple onchange="handleForumImageUpload(event)">
-                    </div>
-                    <div class="forum-inline-note">一条帖子最多添加 9 张图片；相机为文字描述图，图片为本地真实图片。</div>
-                    <div class="forum-preview-strip" id="forum-compose-preview"></div>
-                </div>
+            <div class="forum-ios-nav"><button class="forum-icon-btn forum-back-btn" onclick="closeForumCompose()"><svg viewBox="0 0 24 24"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg></button><div class="forum-ios-title">发布帖子</div><div class="forum-top-actions"><button class="forum-mini-btn" onclick="publishForumPost()">发布</button></div></div>
+            <div class="forum-compose-body">
+                <div class="forum-compose-user"><div id="forum-compose-avatar" class="forum-avatar">我</div><div><div id="forum-compose-id" class="forum-author">微信用户</div><div id="forum-compose-time" class="forum-post-sub">刚刚</div></div></div>
+                <input id="forum-compose-title" class="forum-input" placeholder="帖子标题" style="margin-bottom:10px;">
+                <textarea id="forum-compose-content" class="forum-textarea" placeholder="正文，不限制字数" style="min-height:180px;"></textarea>
+                <div class="forum-compose-grid" id="forum-compose-images"></div>
+                <div class="forum-inline-row" style="margin-top:12px;"><button class="forum-mini-btn" onclick="addForumImageDescription()"><svg viewBox="0 0 24 24"><path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg><span style="margin-left:4px;">相机</span></button><button class="forum-mini-btn" onclick="document.getElementById('forum-image-file').click()"><svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 11.5l2.5 3.01L14.5 10l4.5 6H5z"/></svg><span style="margin-left:4px;">图片</span></button><input id="forum-image-file" class="forum-hidden-input" type="file" accept="image/*" multiple onchange="handleForumImageFiles(event)"></div>
             </div>
         </div>
 
-        <div id="page-forum-manage" class="page forum-page">
-            <div class="forum-shell">
-                <div class="forum-topbar">
-                    <div class="forum-nav-left"><button class="forum-back-btn" onclick="closeForumManage()">‹</button></div>
-                    <div class="forum-title">管理论坛</div>
-                </div>
-                <div class="forum-content" id="forum-manage-content">
-                    <div class="forum-manage-section">
-                        <div class="forum-form-group">
-                            <label>预设栏</label>
-                            <select id="forum-preset-select" class="forum-select" onchange="loadForumPreset()"></select>
-                        </div>
-                        <div class="forum-mini-actions">
-                            <button class="forum-tool-btn" onclick="saveForumPresetPrompt()">保存</button>
-                            <button class="forum-tool-btn" onclick="deleteForumPresetPrompt()">删除</button>
-                        </div>
-                    </div>
-                    <div class="forum-manage-section">
-                        <div class="forum-form-group">
-                            <label>论坛世界观</label>
-                            <textarea id="forum-worldview" class="forum-textarea" placeholder="论坛发生在哪个世界、整体氛围、规则、平台文化……" oninput="saveForumSettingsDebounced()"></textarea>
-                        </div>
-                        <div class="forum-form-group">
-                            <label>关联世界书</label>
-                            <select id="forum-worldbook-select" class="forum-select" onchange="saveForumSettingsDebounced()"></select>
-                        </div>
-                        <div class="forum-two-col">
-                            <div class="forum-form-group">
-                                <label>user 姓名</label>
-                                <input id="forum-user-name" class="forum-input" placeholder="user 姓名" oninput="saveForumSettingsDebounced()">
-                            </div>
-                            <div class="forum-form-group">
-                                <label>论坛 NPC</label>
-                                <input id="forum-npc" class="forum-input" placeholder="NPC 名称 / 群体" oninput="saveForumSettingsDebounced()">
-                            </div>
-                        </div>
-                        <div class="forum-form-group">
-                            <label>user 设定内容</label>
-                            <textarea id="forum-user-setting" class="forum-textarea" placeholder="不限制字数，写入 user 的身份、经历、性格、当前目标……" oninput="saveForumSettingsDebounced()"></textarea>
-                        </div>
-                        <div class="forum-form-group">
-                            <label>关系网</label>
-                            <textarea id="forum-network" class="forum-textarea" placeholder="论坛中角色之间的关系、阵营、冲突、熟人链……" oninput="saveForumSettingsDebounced()"></textarea>
-                        </div>
-                    </div>
-                    <div class="forum-manage-section">
-                        <label style="display:block;font-size:12px;color:var(--forum-gray);font-weight:800;margin-bottom:8px;">参与论坛 char</label>
-                        <div id="forum-contact-checks"></div>
-                    </div>
-                    <div class="forum-manage-section">
-                        <button class="forum-danger-btn" onclick="clearForumPostsPrompt()">清空所有帖子</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-overlay" id="forum-modal">
-            <div class="modal-content">
-                <div class="modal-title" id="forum-modal-title">论坛</div>
-                <input id="forum-modal-input" class="modal-input" style="display:none; margin-bottom:8px;" />
-                <textarea id="forum-modal-textarea" class="form-textarea" style="display:none; min-height:90px; margin-bottom:8px;"></textarea>
-                <div id="forum-modal-message" style="font-size:14px;line-height:1.6;color:var(--text-color);text-align:center;"></div>
-                <div class="modal-actions">
-                    <button class="modal-btn" onclick="closeForumModal(false)">取消</button>
-                    <button class="modal-btn confirm" onclick="closeForumModal(true)">确定</button>
-                </div>
-            </div>
-        </div>
+        <!-- ========== [FORUM-MODAL] 复用已有 modal 样式 ========== -->
+        <div id="forum-modal" class="modal-overlay"><div class="modal-content"><div id="forum-modal-title" class="modal-title">编辑</div><div id="forum-modal-body"></div><div class="modal-actions"><button class="modal-btn" onclick="closeForumModal()">取消</button><button class="modal-btn confirm" onclick="confirmForumModal()">确定</button></div></div></div>
 
     <div class="dock">
         <div class="dock-item active" onclick="switchTab('chats', this)">
@@ -4622,544 +4385,142 @@ async function saveChatApiSettings() {
         // 重新定义头像模式专用处理（非消息编辑时使用图片选择保存到 IndexedDB）
         // saveModal 中已通过 tempEditMsgIndex 判断
 
-
-
-        // ============================================================
-        // [FORUM-V3] 微信模拟器论坛功能：参考 QQ.html 的安全区/分页/管理思路
-        // ============================================================
-        const FORUM_DEFAULT_GROUPS = ['推荐', '日常', '娱乐', '推文', 'R18'];
-        let forumState = {
-            activeTab: 'home',
-            activeGroup: '推荐',
-            groups: [...FORUM_DEFAULT_GROUPS],
-            posts: [],
-            composeImages: [],
-            modalResolve: null,
-            saveTimer: null
-        };
-
-        function forumEscape(str) {
-            return String(str || '').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));
-        }
-
-        function forumNowText(ts = Date.now()) {
-            const d = new Date(ts);
-            const pad = n => String(n).padStart(2, '0');
-            return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        }
-
-        function forumDateText(ts = Date.now()) {
-            const d = new Date(ts);
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        }
-
-        async function forumGetMe() {
-            const nickname = await dbGet('wechat_nickname', document.getElementById('me-nickname-text')?.textContent || '微信用户');
-            const wxid = await dbGet('wechat_wxid', (document.getElementById('me-wxid-text')?.textContent || 'wxid_123456789').replace('微信号:', '').trim());
-            const avatar = await dbGet('wechat_avatar', '') || await dbGet('moments_avatar', '');
-            return { nickname: nickname || '微信用户', wxid: wxid || 'wxid_123456789', avatar: avatar || '' };
-        }
-
-        async function getForumSettings() {
-            const defaults = {
-                worldview: '', worldbookId: '', userName: '', userSetting: '', npc: '', network: '', selectedContactIds: []
-            };
-            const val = await dbGet('forum_settings_v3', defaults);
-            return Object.assign(defaults, val || {});
-        }
-
-        async function setForumSettings(next) {
-            await dbSet('forum_settings_v3', next);
-        }
-
-        async function getForumProfile() {
-            const me = await forumGetMe();
-            const defaults = {
-                nickname: me.nickname,
-                wxid: me.wxid,
-                avatar: me.avatar,
-                background: '',
-                joined: forumDateText(Date.now()),
-                fans: 0,
-                following: 0,
-                likes: 0,
-                bio: '这个人很神秘，什么都没有写。'
-            };
-            const saved = await dbGet('forum_profile_v3', defaults);
-            return Object.assign(defaults, saved || {});
-        }
-
-        async function setForumProfile(next) { await dbSet('forum_profile_v3', next); }
-        async function getForumGroups() { return await dbGet('forum_groups_v3', [...FORUM_DEFAULT_GROUPS]); }
-        async function setForumGroups(groups) { await dbSet('forum_groups_v3', groups); }
-        async function getForumPosts() { return await dbGet('forum_posts_v3', []); }
-        async function setForumPosts(posts) { await dbSet('forum_posts_v3', posts); }
-        async function getForumPresets() { return await dbGet('forum_presets_v3', []); }
-        async function setForumPresets(presets) { await dbSet('forum_presets_v3', presets); }
-
-        function openForum() {
-            document.getElementById('page-forum').classList.add('active');
-            document.querySelector('.dock').style.display = 'none';
-            initForum();
-        }
-
-        function closeForum() {
-            document.getElementById('page-forum').classList.remove('active');
-            document.querySelector('.dock').style.display = 'flex';
-        }
-
-        async function initForum() {
-            forumState.groups = await getForumGroups();
-            if (!Array.isArray(forumState.groups) || forumState.groups.length === 0) forumState.groups = [...FORUM_DEFAULT_GROUPS];
-            forumState.posts = await getForumPosts();
-            if (!Array.isArray(forumState.posts)) forumState.posts = [];
-            if (!forumState.groups.includes(forumState.activeGroup)) forumState.activeGroup = forumState.groups[0] || '推荐';
-            renderForumGroups();
-            renderForumPosts();
-            renderForumHot(false);
-            renderForumDM(false);
-            renderForumMe('posts');
-        }
-
-        function switchForumTab(tab) {
-            forumState.activeTab = tab;
-            document.querySelectorAll('#page-forum .forum-panel').forEach(p => p.classList.remove('active'));
-            const panel = document.getElementById('forum-panel-' + tab);
-            if (panel) panel.classList.add('active');
-            document.querySelectorAll('#page-forum .forum-dock-item').forEach((item, idx) => item.classList.toggle('active', ['home','hot','dm','me'][idx] === tab));
-            if (tab === 'hot') renderForumHot(false);
-            if (tab === 'dm') renderForumDM(false);
-            if (tab === 'me') renderForumMe('posts');
-        }
-
-        function renderForumGroups() {
-            const box = document.getElementById('forum-group-tabs');
-            if (!box) return;
-            const chips = forumState.groups.map(g => `
-                <button class="forum-chip ${g === forumState.activeGroup ? 'active' : ''}" onclick="selectForumGroup('${forumEscape(g)}')">
-                    <span>${forumEscape(g)}</span><span class="chip-x" onclick="event.stopPropagation(); deleteForumGroupPrompt('${forumEscape(g)}')">×</span>
-                </button>`).join('');
-            box.innerHTML = chips + `<button class="forum-chip" onclick="addForumGroupPrompt()">+</button>`;
-        }
-
-        function selectForumGroup(group) {
-            forumState.activeGroup = group;
-            renderForumGroups();
-            renderForumPosts();
-        }
-
-        async function addForumGroupPrompt() {
-            const name = await forumPrompt('添加分组', '输入分组名', 'input');
-            if (!name) return;
-            const clean = name.trim();
-            if (!clean) return;
-            if (forumState.groups.includes(clean)) return alert('分组已存在');
-            forumState.groups.push(clean);
-            forumState.activeGroup = clean;
-            await setForumGroups(forumState.groups);
-            renderForumGroups();
-            renderForumPosts();
-        }
-
-        async function deleteForumGroupPrompt(group) {
-            const ok = await forumConfirm('删除分组', `确定删除「${group}」吗？该分组下帖子不会删除，只是不再按此分组筛选。`);
-            if (!ok) return;
-            forumState.groups = forumState.groups.filter(g => g !== group);
-            if (forumState.groups.length === 0) forumState.groups = [...FORUM_DEFAULT_GROUPS];
-            if (forumState.activeGroup === group) forumState.activeGroup = forumState.groups[0];
-            await setForumGroups(forumState.groups);
-            renderForumGroups();
-            renderForumPosts();
-        }
-
-        async function renderForumPosts() {
-            forumState.posts = await getForumPosts();
-            const list = document.getElementById('forum-post-list');
-            if (!list) return;
-            const posts = (forumState.posts || []).filter(p => p.group === forumState.activeGroup || forumState.activeGroup === '推荐');
-            if (posts.length === 0) {
-                list.innerHTML = `<div class="forum-empty">暂无帖子<br>点击右下角 + 发第一条，或点右上角刷新调用 API 生成。</div>`;
-                return;
-            }
-            list.innerHTML = posts.slice().reverse().map(p => renderForumPostCard(p)).join('');
-        }
-
-        function renderForumPostCard(p) {
-            const avatar = p.avatar ? `<img src="${p.avatar}">` : forumEscape((p.author || 'U').slice(0,1));
-            const medias = Array.isArray(p.images) && p.images.length ? `<div class="forum-media-grid">${p.images.slice(0,9).map(img => img.type === 'real' ? `<div class="forum-media-cell"><img src="${img.src}"></div>` : `<div class="forum-media-cell">${forumEscape(img.text || '文字描述图')}</div>`).join('')}</div>` : '';
-            return `<div class="forum-post">
-                <div class="forum-post-head">
-                    <div class="forum-avatar">${avatar}</div>
-                    <div class="forum-post-main">
-                        <div class="forum-post-meta"><span class="forum-post-author">${forumEscape(p.author)}</span><span>@${forumEscape(p.wxid || 'forum')}</span><span>·</span><span>${forumEscape(p.timeText || forumNowText(p.createdAt))}</span><span>·</span><span>${forumEscape(p.group || '推荐')}</span></div>
-                        <div class="forum-post-title">${forumEscape(p.title || '无标题')}</div>
-                        <div class="forum-post-body">${forumEscape(p.body || '')}</div>
-                        ${medias}
-                        <div class="forum-actions-row"><span>↩ ${p.replies || 0}</span><span>↻ ${p.reposts || 0}</span><span>♡ ${p.likes || 0}</span></div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        async function openForumComposer() {
-            document.getElementById('page-forum-compose').classList.add('active');
-            forumState.composeImages = [];
-            document.getElementById('forum-compose-title').value = '';
-            document.getElementById('forum-compose-body').value = '';
-            document.getElementById('forum-compose-time').textContent = '现在 · ' + forumDateText(Date.now());
-            const me = await forumGetMe();
-            document.getElementById('forum-compose-name').textContent = me.nickname;
-            document.getElementById('forum-compose-avatar').innerHTML = me.avatar ? `<img src="${me.avatar}">` : forumEscape(me.nickname.slice(0,1));
-            const sel = document.getElementById('forum-compose-group');
-            forumState.groups = await getForumGroups();
-            sel.innerHTML = forumState.groups.map(g => `<option value="${forumEscape(g)}" ${g === forumState.activeGroup ? 'selected' : ''}>${forumEscape(g)}</option>`).join('');
-            renderForumComposePreview();
-        }
-
-        function closeForumComposer() { document.getElementById('page-forum-compose').classList.remove('active'); }
-
-        async function addForumTextImage() {
-            if (forumState.composeImages.length >= 9) return alert('最多只能添加 9 张图片');
-            const text = await forumPrompt('添加文字描述图片', '输入图片描述', 'textarea');
-            if (!text) return;
-            forumState.composeImages.push({ type: 'text', text: text.trim() });
-            renderForumComposePreview();
-        }
-
-        function handleForumImageUpload(event) {
-            const files = Array.from(event.target.files || []);
-            if (!files.length) return;
-            const remain = 9 - forumState.composeImages.length;
-            files.slice(0, remain).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    forumState.composeImages.push({ type: 'real', src: e.target.result });
-                    renderForumComposePreview();
-                };
-                reader.readAsDataURL(file);
-            });
-            event.target.value = '';
-            if (files.length > remain) alert('最多只能添加 9 张图片，已自动截取。');
-        }
-
-        function renderForumComposePreview() {
-            const box = document.getElementById('forum-compose-preview');
-            if (!box) return;
-            box.innerHTML = forumState.composeImages.map((img, idx) => img.type === 'real' ? `<div class="forum-media-cell" onclick="removeForumComposeImage(${idx})"><img src="${img.src}"></div>` : `<div class="forum-media-cell" onclick="removeForumComposeImage(${idx})">${forumEscape(img.text)}</div>`).join('');
-        }
-
-        function removeForumComposeImage(idx) {
-            forumState.composeImages.splice(idx, 1);
-            renderForumComposePreview();
-        }
-
-        async function publishForumPost() {
-            const title = document.getElementById('forum-compose-title').value.trim();
-            const body = document.getElementById('forum-compose-body').value.trim();
-            const group = document.getElementById('forum-compose-group').value || forumState.activeGroup || '推荐';
-            if (!title && !body) return alert('标题或正文至少填写一项');
-            const me = await forumGetMe();
-            const post = {
-                id: Date.now() + '_' + Math.random().toString(36).slice(2,8),
-                author: me.nickname,
-                wxid: me.wxid,
-                avatar: me.avatar,
-                group,
-                title: title || '无标题',
-                body,
-                images: forumState.composeImages.slice(0,9),
-                createdAt: Date.now(),
-                timeText: forumNowText(),
-                likes: Math.floor(Math.random()*200),
-                replies: Math.floor(Math.random()*36),
-                reposts: Math.floor(Math.random()*18),
-                source: 'user'
-            };
-            const posts = await getForumPosts();
-            posts.push(post);
-            await setForumPosts(posts);
-            closeForumComposer();
-            forumState.activeGroup = group;
-            await initForum();
-        }
-
-        async function refreshForumPosts(useApi) {
-            const contacts = await db.contacts.toArray().catch(() => []);
-            const settings = await getForumSettings();
-            const selected = contacts.filter(c => !settings.selectedContactIds?.length || settings.selectedContactIds.includes(String(c.id)));
-            const me = await forumGetMe();
-            let generated = [];
-            if (useApi) {
-                generated = await generateForumPostsByAPI(settings, selected, me).catch(err => {
-                    console.warn('论坛 API 刷新失败，使用 fallback:', err);
-                    return [];
-                });
-            }
-            if (!generated.length) generated = fallbackForumPosts(settings, selected, me);
-            const posts = await getForumPosts();
-            await setForumPosts(posts.concat(generated));
-            await renderForumPosts();
-            renderForumHot(false);
-        }
-
-        async function generateForumPostsByAPI(settings, contacts, me) {
-            const apiUrl = (await dbGet('chat_api_url', '') || '').trim();
-            const apiKey = (await dbGet('chat_api_key', '') || '').trim();
-            const apiModel = (await dbGet('chat_api_model', '') || '').trim();
-            const temperature = parseFloat(await dbGet('chat_api_temperature', 0.8)) || 0.8;
-            if (!apiUrl || !apiKey || !apiModel) return [];
-            let fullUrl = apiUrl;
-            if (!fullUrl.endsWith('/v1') && !fullUrl.endsWith('/v1/')) fullUrl = fullUrl.replace(/\/$/, '') + '/v1';
-            const group = forumState.activeGroup || '推荐';
-            const prompt = `你是论坛帖子生成器。请根据设定生成 3 条中文论坛帖子，必须返回 JSON 数组，不要 Markdown。每项包含 author,title,body,group,likes,replies,reposts。\n当前分组：${group}\n论坛世界观：${settings.worldview || '未设置'}\n关联世界书ID：${settings.worldbookId || '无'}\nuser姓名：${settings.userName || me.nickname}\nuser设定：${settings.userSetting || '未设置'}\n论坛NPC：${settings.npc || '未设置'}\n关系网：${settings.network || '未设置'}\n可用联系人：${contacts.map(c => (c.char?.username || c.name || '联系人') + ':' + (c.char?.detail || '')).join('\n')}`;
-            const response = await fetch(`${fullUrl}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: apiModel, temperature, stream: false, messages: [{ role:'system', content:'只返回 JSON 数组。' }, { role:'user', content: prompt }] })
-            });
-            if (!response.ok) throw new Error('API请求失败: ' + response.status);
-            const data = await response.json();
-            const text = data.choices?.[0]?.message?.content || '[]';
-            const jsonText = text.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
-            const arr = JSON.parse(jsonText);
-            return (Array.isArray(arr) ? arr : []).slice(0,5).map(item => ({
-                id: Date.now() + '_' + Math.random().toString(36).slice(2,8),
-                author: item.author || (contacts[0]?.char?.username || '论坛用户'),
-                wxid: 'forum_' + Math.random().toString(36).slice(2,8),
-                avatar: '',
-                group: item.group || group,
-                title: item.title || '论坛新帖',
-                body: item.body || '',
-                images: [],
-                createdAt: Date.now(),
-                timeText: forumNowText(),
-                likes: Number(item.likes) || Math.floor(Math.random()*500),
-                replies: Number(item.replies) || Math.floor(Math.random()*80),
-                reposts: Number(item.reposts) || Math.floor(Math.random()*30),
-                source: 'api'
-            }));
-        }
-
-        function fallbackForumPosts(settings, contacts, me) {
-            const group = forumState.activeGroup || '推荐';
-            const pool = contacts.length ? contacts : [{ char: { username: settings.npc || '论坛NPC', detail: settings.worldview || '论坛住民' } }];
-            return [0,1,2].map(i => {
-                const c = pool[i % pool.length];
-                const name = c.char?.username || c.name || `论坛用户${i+1}`;
-                const topic = settings.worldview ? settings.worldview.slice(0, 18) : group;
-                return {
-                    id: Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2,6),
-                    author: name,
-                    wxid: 'forum_' + Math.random().toString(36).slice(2,8),
-                    avatar: c.char?.avatar || '',
-                    group,
-                    title: `${topic}｜${group}分组新动态`,
-                    body: `${name} 发布了一条与「${group}」有关的新帖。${settings.network ? '关系网里似乎又有新变化。' : '点齿轮完善世界观、NPC与关系网后，刷新会更贴近设定。'}`,
-                    images: [],
-                    createdAt: Date.now(),
-                    timeText: forumNowText(),
-                    likes: Math.floor(Math.random()*300),
-                    replies: Math.floor(Math.random()*50),
-                    reposts: Math.floor(Math.random()*20),
-                    source: 'fallback'
-                };
-            });
-        }
-
-        async function renderForumHot(randomize) {
-            const list = document.getElementById('forum-hot-list');
-            if (!list) return;
-            const posts = await getForumPosts();
-            const q = (document.getElementById('forum-hot-search')?.value || '').trim().toLowerCase();
-            let items = posts.filter(p => !q || (p.title + p.body + p.author).toLowerCase().includes(q));
-            if (randomize) items = items.sort(() => Math.random() - .5);
-            items = items.sort((a,b) => (b.likes + b.replies*3 + b.reposts*5) - (a.likes + a.replies*3 + a.reposts*5)).slice(0,20);
-            if (!items.length) { list.innerHTML = `<div class="forum-empty">暂无热搜内容<br>刷新首页帖子后会自动生成。</div>`; return; }
-            list.innerHTML = items.map((p, i) => `<div class="forum-hot-item"><div class="forum-rank">${i+1}</div><div class="forum-hot-text"><div class="forum-hot-title">${forumEscape(p.title)}</div><div class="forum-hot-sub">${forumEscape(p.author)} · ${p.likes || 0} 热度 · ${forumEscape(p.group)}</div></div></div>`).join('');
-        }
-
-        async function renderForumDM(randomize) {
-            const list = document.getElementById('forum-dm-list');
-            if (!list) return;
-            const contacts = await db.contacts.toArray().catch(() => []);
-            let items = contacts.slice();
-            if (randomize) items.sort(() => Math.random() - .5);
-            if (!items.length) { list.innerHTML = `<div class="forum-empty">暂无私信<br>通讯录添加联系人后会出现在这里。</div>`; return; }
-            list.innerHTML = items.map(c => {
-                const name = c.char?.username || c.name || '联系人';
-                const avatar = c.char?.avatar ? `<img src="${c.char.avatar}">` : forumEscape(name.slice(0,1));
-                return `<div class="forum-dm-item"><div class="forum-avatar">${avatar}</div><div class="forum-dm-text"><div class="forum-dm-name">${forumEscape(name)}</div><div class="forum-dm-sub">${forumEscape(c.char?.signature || c.char?.detail || '来自论坛的私信预览')}</div></div></div>`;
-            }).join('');
-        }
-
-        async function renderForumMe(active = 'posts') {
-            const box = document.getElementById('forum-me-content');
-            if (!box) return;
-            const profile = await getForumProfile();
-            const posts = (await getForumPosts()).filter(p => p.source === 'user');
-            const avatar = profile.avatar ? `<img src="${profile.avatar}">` : forumEscape((profile.nickname || '我').slice(0,1));
-            const bg = profile.background ? `style="background-image:url('${profile.background}');background-size:cover;background-position:center;"` : '';
-            const tabContent = active === 'posts' ? (posts.length ? posts.slice().reverse().map(renderForumPostCard).join('') : '<div class="forum-empty">还没有发过帖子</div>') : `<div class="forum-empty">${active === 'reply' ? '暂无回复' : '暂无转发'}</div>`;
-            box.innerHTML = `<div class="forum-profile-cover" ${bg}></div>
-                <div class="forum-profile-card" onclick="editForumProfilePrompt()">
-                    <div class="forum-profile-row"><div class="forum-profile-avatar">${avatar}</div><div><div class="forum-profile-name">${forumEscape(profile.nickname)}</div><div class="forum-profile-id">@${forumEscape(profile.wxid)} · 📅 ${forumEscape(profile.joined)}</div></div></div>
-                    <div class="forum-profile-bio">${forumEscape(profile.bio)}</div>
-                    <div class="forum-stat-row"><div><div class="forum-stat-num">${profile.fans}</div><div class="forum-stat-label">粉丝</div></div><div><div class="forum-stat-num">${profile.following}</div><div class="forum-stat-label">关注</div></div><div><div class="forum-stat-num">${profile.likes}</div><div class="forum-stat-label">获赞</div></div></div>
-                </div>
-                <div class="forum-profile-tabs"><button class="${active==='posts'?'active':''}" onclick="renderForumMe('posts')">帖子</button><button class="${active==='reply'?'active':''}" onclick="renderForumMe('reply')">回复</button><button class="${active==='repost'?'active':''}" onclick="renderForumMe('repost')">转发</button></div>
-                ${tabContent}`;
-        }
-
-        async function editForumProfilePrompt() {
-            const p = await getForumProfile();
-            const text = await forumPrompt('编辑我的论坛主页', '昵称|加入时间|粉丝|关注|获赞|签名', 'textarea', `${p.nickname}\n${p.joined}\n${p.fans}\n${p.following}\n${p.likes}\n${p.bio}`);
-            if (!text) return;
-            const lines = text.split('\n');
-            p.nickname = lines[0] || p.nickname;
-            p.joined = lines[1] || p.joined;
-            p.fans = Number(lines[2]) || 0;
-            p.following = Number(lines[3]) || 0;
-            p.likes = Number(lines[4]) || 0;
-            p.bio = lines.slice(5).join('\n') || p.bio;
-            await setForumProfile(p);
-            renderForumMe('posts');
-        }
-
-        async function openForumManage() {
-            document.getElementById('page-forum-manage').classList.add('active');
-            await renderForumManage();
-        }
-        function closeForumManage() { document.getElementById('page-forum-manage').classList.remove('active'); }
-
-        async function renderForumManage() {
-            const settings = await getForumSettings();
-            const presets = await getForumPresets();
-            const presetSel = document.getElementById('forum-preset-select');
-            presetSel.innerHTML = `<option value="">-- 请选择预设 --</option>` + presets.map((p, idx) => `<option value="${idx}">${forumEscape(p.name)}</option>`).join('');
-            document.getElementById('forum-worldview').value = settings.worldview || '';
-            document.getElementById('forum-user-name').value = settings.userName || '';
-            document.getElementById('forum-user-setting').value = settings.userSetting || '';
-            document.getElementById('forum-npc').value = settings.npc || '';
-            document.getElementById('forum-network').value = settings.network || '';
-            const wb = await db.worldbook.toArray().catch(() => []);
-            const wbSel = document.getElementById('forum-worldbook-select');
-            wbSel.innerHTML = `<option value="">不关联</option>` + wb.map(w => `<option value="${w.id}" ${String(settings.worldbookId)===String(w.id)?'selected':''}>${forumEscape(w.title || '未命名世界书')}</option>`).join('');
-            const contacts = await db.contacts.toArray().catch(() => []);
-            const selected = new Set((settings.selectedContactIds || []).map(String));
-            const checks = document.getElementById('forum-contact-checks');
-            checks.innerHTML = contacts.length ? contacts.map(c => {
-                const name = c.char?.username || c.name || '联系人';
-                const detail = c.char?.detail || c.char?.signature || '';
-                return `<div class="forum-contact-check"><div><div class="forum-contact-name">${forumEscape(name)}</div><div class="forum-contact-sub">${forumEscape(detail || '无设定')}</div></div><input type="checkbox" ${selected.has(String(c.id))?'checked':''} onchange="toggleForumContact('${c.id}', this.checked)"></div>`;
-            }).join('') : `<div class="forum-empty" style="padding:20px 0;">暂无联系人</div>`;
-        }
-
-        async function readForumSettingsFromForm() {
-            const current = await getForumSettings();
-            return Object.assign(current, {
-                worldview: document.getElementById('forum-worldview')?.value || '',
-                worldbookId: document.getElementById('forum-worldbook-select')?.value || '',
-                userName: document.getElementById('forum-user-name')?.value || '',
-                userSetting: document.getElementById('forum-user-setting')?.value || '',
-                npc: document.getElementById('forum-npc')?.value || '',
-                network: document.getElementById('forum-network')?.value || ''
-            });
-        }
-
-        function saveForumSettingsDebounced() {
-            clearTimeout(forumState.saveTimer);
-            forumState.saveTimer = setTimeout(async () => await setForumSettings(await readForumSettingsFromForm()), 250);
-        }
-
-        async function toggleForumContact(id, checked) {
-            const settings = await readForumSettingsFromForm();
-            const set = new Set((settings.selectedContactIds || []).map(String));
-            checked ? set.add(String(id)) : set.delete(String(id));
-            settings.selectedContactIds = Array.from(set);
-            await setForumSettings(settings);
-        }
-
-        async function saveForumPresetPrompt() {
-            const name = await forumPrompt('保存论坛预设', '输入预设名', 'input');
-            if (!name) return;
-            const presets = await getForumPresets();
-            const settings = await readForumSettingsFromForm();
-            presets.push({ name: name.trim(), settings, createdAt: Date.now() });
-            await setForumPresets(presets);
-            await renderForumManage();
-        }
-
-        async function loadForumPreset() {
-            const idx = document.getElementById('forum-preset-select').value;
-            if (idx === '') return;
-            const presets = await getForumPresets();
-            const preset = presets[Number(idx)];
-            if (!preset) return;
-            await setForumSettings(preset.settings || {});
-            await renderForumManage();
-        }
-
-        async function deleteForumPresetPrompt() {
-            const idx = document.getElementById('forum-preset-select').value;
-            if (idx === '') return alert('请先选择预设');
-            const ok = await forumConfirm('删除预设', '确定删除当前论坛预设吗？');
-            if (!ok) return;
-            const presets = await getForumPresets();
-            presets.splice(Number(idx), 1);
-            await setForumPresets(presets);
-            await renderForumManage();
-        }
-
-        async function clearForumPostsPrompt() {
-            const ok = await forumConfirm('清空所有帖子', '确定清空论坛全部帖子吗？此操作不可恢复。');
-            if (!ok) return;
-            await setForumPosts([]);
-            forumState.posts = [];
-            renderForumPosts();
-            renderForumHot(false);
-        }
-
-        function forumPrompt(title, placeholder, type = 'input', value = '') {
-            return new Promise(resolve => {
-                forumState.modalResolve = resolve;
-                document.getElementById('forum-modal-title').textContent = title;
-                document.getElementById('forum-modal-message').textContent = '';
-                const input = document.getElementById('forum-modal-input');
-                const textarea = document.getElementById('forum-modal-textarea');
-                input.style.display = type === 'input' ? 'block' : 'none';
-                textarea.style.display = type === 'textarea' ? 'block' : 'none';
-                input.placeholder = placeholder || '';
-                textarea.placeholder = placeholder || '';
-                input.value = type === 'input' ? value : '';
-                textarea.value = type === 'textarea' ? value : '';
-                document.getElementById('forum-modal').style.display = 'flex';
-                setTimeout(() => (type === 'textarea' ? textarea : input).focus(), 30);
-            });
-        }
-
-        function forumConfirm(title, message) {
-            return new Promise(resolve => {
-                forumState.modalResolve = ok => resolve(!!ok);
-                document.getElementById('forum-modal-title').textContent = title;
-                document.getElementById('forum-modal-message').textContent = message;
-                document.getElementById('forum-modal-input').style.display = 'none';
-                document.getElementById('forum-modal-textarea').style.display = 'none';
-                document.getElementById('forum-modal').style.display = 'flex';
-            });
-        }
-
-        function closeForumModal(ok) {
-            const input = document.getElementById('forum-modal-input');
-            const textarea = document.getElementById('forum-modal-textarea');
-            const val = input.style.display !== 'none' ? input.value : (textarea.style.display !== 'none' ? textarea.value : ok);
-            document.getElementById('forum-modal').style.display = 'none';
-            if (forumState.modalResolve) forumState.modalResolve(ok ? val : null);
-            forumState.modalResolve = null;
-        }
-
         // ============================================================
         // [APP-INIT] 应用启动入口
         // ============================================================
+
+// ============================================================
+// [FORUM-FULL] 论坛完整逻辑：状态、预设、分组、发帖、API刷新、热搜、私信、我的
+// ============================================================
+let forumGroups = ['推荐','日常','娱乐','推文','R18'];
+let currentForumGroup = '推荐';
+let forumCurrentDock = 'home';
+let forumComposeImages = [];
+let forumModalCallback = null;
+let forumMineTab = 'posts';
+
+function forumEscape(s){return String(s ?? '').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function forumNowText(){const d=new Date();return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function forumContactName(c){return c?.char?.username || c?.char?.name || c?.nickname || c?.name || c?.remark || '未命名';}
+function forumContactDetail(c){return c?.char?.detail || c?.setting || c?.detail || c?.signature || '';}
+function showMainDock(show){const d=document.querySelector('body > .dock, .dock');if(d)d.style.display=show?'flex':'none';}
+function forumAvatarHtml(src,name){if(src)return `<img src="${forumEscape(src)}">`;return forumEscape(String(name||'我').slice(0,1));}
+function openForumModal(title,bodyHtml,cb){document.getElementById('forum-modal-title').textContent=title;document.getElementById('forum-modal-body').innerHTML=bodyHtml;forumModalCallback=cb;document.getElementById('forum-modal').style.display='flex';setTimeout(()=>{const i=document.querySelector('#forum-modal input,#forum-modal textarea');if(i)i.focus();},30);}
+function closeForumModal(){document.getElementById('forum-modal').style.display='none';forumModalCallback=null;}
+function confirmForumModal(){if(typeof forumModalCallback==='function')forumModalCallback();}
+function forumPrompt(title,label,value,cb){openForumModal(title,`<div class="forum-label">${forumEscape(label)}</div><input id="forum-modal-input" class="modal-input" value="${forumEscape(value||'')}">`,()=>{const v=document.getElementById('forum-modal-input').value.trim();closeForumModal();cb(v);});}
+function forumConfirm(title,text,cb){openForumModal(title,`<div style="font-size:14px;line-height:1.65;text-align:center;color:var(--text-color);">${forumEscape(text)}</div>`,()=>{closeForumModal();cb();});}
+async function getForumPosts(){return await dbGet('forum_posts',[]);}
+async function setForumPosts(posts){await dbSet('forum_posts',posts);}
+
+async function openForum(){
+    document.getElementById('page-forum').classList.add('active');
+    showMainDock(false);
+    await loadForumState();
+    await renderForumManageOptions();
+    renderForumGroups();
+    await renderForumPosts();
+    await renderForumHot();
+    await renderForumDM();
+    await renderForumMine();
+    switchForumDock(forumCurrentDock || 'home');
+}
+function closeForum(){document.getElementById('page-forum').classList.remove('active');document.getElementById('page-forum-compose').classList.remove('active');showMainDock(true);}
+function toggleForumManage(){document.getElementById('forum-management-panel').classList.toggle('show');}
+
+async function loadForumState(){
+    forumGroups = await dbGet('forum_groups',['推荐','日常','娱乐','推文','R18']);
+    if(!Array.isArray(forumGroups)||!forumGroups.length) forumGroups=['推荐','日常','娱乐','推文','R18'];
+    currentForumGroup = await dbGet('forum_current_group',forumGroups[0]);
+    if(!forumGroups.includes(currentForumGroup)) currentForumGroup=forumGroups[0];
+}
+async function saveForumConfig(){
+    const selectedChars=Array.from(document.querySelectorAll('.forum-char-check:checked')).map(x=>Number(x.value));
+    const cfg={
+        worldview:document.getElementById('forum-worldview').value,
+        worldbookId:document.getElementById('forum-worldbook-select').value,
+        userName:document.getElementById('forum-user-name').value,
+        userSetting:document.getElementById('forum-user-setting').value,
+        selectedChars,
+        npc:document.getElementById('forum-npc').value,
+        relationship:document.getElementById('forum-relationship').value
+    };
+    await dbSet('forum_config',cfg);
+}
+async function renderForumManageOptions(){
+    const cfg=await dbGet('forum_config',{});
+    const wb=await db.worldbook.toArray();
+    document.getElementById('forum-worldbook-select').innerHTML='<option value="">不关联</option>'+wb.map(x=>`<option value="${x.id}">${forumEscape(x.title||'未命名世界书')}</option>`).join('');
+    document.getElementById('forum-worldbook-select').value=cfg.worldbookId||'';
+    const contacts=await getContacts();
+    document.getElementById('forum-char-list').innerHTML=contacts.length?contacts.map(c=>`<label class="forum-char-option"><span>${forumEscape(forumContactName(c))}</span><input class="forum-char-check" type="checkbox" value="${c.id}" ${(cfg.selectedChars||[]).map(Number).includes(Number(c.id))?'checked':''} onchange="saveForumConfig()"></label>`).join(''):'<div class="forum-empty" style="grid-column:1/-1;padding:18px 0;">暂无联系人</div>';
+    document.getElementById('forum-worldview').value=cfg.worldview||'';
+    document.getElementById('forum-user-name').value=cfg.userName||'';
+    document.getElementById('forum-user-setting').value=cfg.userSetting||'';
+    document.getElementById('forum-npc').value=cfg.npc||'';
+    document.getElementById('forum-relationship').value=cfg.relationship||'';
+    const presets=await dbGet('forum_presets',[]);
+    document.getElementById('forum-preset-select').innerHTML='<option value="">选择论坛预设</option>'+presets.map((p,i)=>`<option value="${i}">${forumEscape(p.name)}</option>`).join('');
+}
+async function saveForumPreset(){await saveForumConfig();forumPrompt('保存论坛预设','预设名','',async name=>{if(!name)return;const presets=await dbGet('forum_presets',[]);const cfg=await dbGet('forum_config',{});presets.push({name,config:cfg,groups:[...forumGroups]});await dbSet('forum_presets',presets);await renderForumManageOptions();document.getElementById('forum-preset-select').value=presets.length-1;});}
+async function loadForumPreset(){const idx=document.getElementById('forum-preset-select').value;if(idx==='')return;const presets=await dbGet('forum_presets',[]);const p=presets[Number(idx)];if(!p)return;await dbSet('forum_config',p.config||{});if(Array.isArray(p.groups)&&p.groups.length){forumGroups=p.groups;await dbSet('forum_groups',forumGroups);}await renderForumManageOptions();renderForumGroups();await renderForumPosts();}
+async function deleteForumPreset(){const idx=document.getElementById('forum-preset-select').value;if(idx==='')return alert('请先选择预设');forumConfirm('删除预设','确定删除当前论坛预设？',async()=>{const presets=await dbGet('forum_presets',[]);presets.splice(Number(idx),1);await dbSet('forum_presets',presets);await renderForumManageOptions();});}
+
+function renderForumGroups(){
+    const box=document.getElementById('forum-group-tabs');
+    box.innerHTML=forumGroups.map(g=>`<button class="forum-chip ${g===currentForumGroup?'active':''}" onclick="selectForumGroup('${forumEscape(g)}')"><span>${forumEscape(g)}</span><span class="forum-chip-x" onclick="deleteForumGroup(event,'${forumEscape(g)}')">×</span></button>`).join('')+`<button class="forum-chip forum-chip-add" onclick="addForumGroup()">+</button>`;
+}
+async function selectForumGroup(g){currentForumGroup=g;await dbSet('forum_current_group',g);renderForumGroups();await renderForumPosts();}
+function addForumGroup(){forumPrompt('添加分组','分组名','',async name=>{if(!name)return;if(forumGroups.includes(name))return alert('分组已存在');forumGroups.push(name);await dbSet('forum_groups',forumGroups);renderForumGroups();});}
+function deleteForumGroup(e,g){e.stopPropagation();forumConfirm('删除分组',`确定删除「${g}」分组？该操作不会删除帖子，只会移除分组入口。`,async()=>{if(forumGroups.length<=1)return alert('至少保留一个分组');forumGroups=forumGroups.filter(x=>x!==g);if(currentForumGroup===g)currentForumGroup=forumGroups[0];await dbSet('forum_groups',forumGroups);await dbSet('forum_current_group',currentForumGroup);renderForumGroups();await renderForumPosts();});}
+async function clearForumPosts(){forumConfirm('清空所有帖子','确定清空论坛全部帖子？此操作不可撤销。',async()=>{await setForumPosts([]);await renderForumPosts();await renderForumHot();await renderForumMine();});}
+
+async function renderForumPosts(){
+    const posts=await getForumPosts();
+    const list=posts.filter(p=>!currentForumGroup||p.group===currentForumGroup);
+    document.getElementById('forum-post-list').innerHTML=list.length?list.map(renderForumPost).join(''):'<div class="forum-empty">当前分组还没有帖子。<br>点击右下角 + 发布，或点击刷新调用 API 生成。</div>';
+}
+function renderForumPost(p){
+    const images=(p.images||[]).slice(0,9).map(x=>`<div class="forum-post-image">${x.type==='image'?`<img src="${x.content}">`:forumEscape(x.content)}</div>`).join('');
+    return `<article class="forum-post"><div class="forum-avatar">${forumAvatarHtml(p.avatar,p.author)}</div><div class="forum-post-body"><div class="forum-post-head"><div class="forum-author">${forumEscape(p.author||'匿名')}</div><div class="forum-post-sub">${forumEscape(p.idText||'@forum')} · ${forumEscape(p.time||'刚刚')}</div></div><div class="forum-post-title">${forumEscape(p.title||'无标题')}</div><div class="forum-post-text">${forumEscape(p.body||'')}</div>${images?`<div class="forum-post-images">${images}</div>`:''}<div class="forum-post-actions"><span>↻ ${p.reposts||0}</span><span>💬 ${p.replies||0}</span><span>♥ ${p.likes||0}</span></div></div></article>`;
+}
+
+function switchForumDock(name){
+    forumCurrentDock=name;
+    document.querySelectorAll('.forum-view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('forum-view-'+name).classList.add('active');
+    document.querySelectorAll('.forum-dock-item').forEach((b,i)=>b.classList.toggle('active',['home','hot','dm','mine'][i]===name));
+    document.getElementById('forum-group-tabs').style.display=name==='home'?'flex':'none';
+    document.getElementById('forum-management-panel').classList.remove('show');
+    const titles={home:'首页',hot:'热搜',dm:'私信',mine:'我的'};
+    document.getElementById('forum-nav-title').textContent=titles[name];
+    const actions=document.getElementById('forum-nav-actions');
+    if(name==='home') actions.innerHTML=`<button class="forum-icon-btn" onclick="refreshForumPosts()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z"/></svg></button><button class="forum-icon-btn" onclick="toggleForumManage()"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.3 7.3 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.22.09.48 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"/></svg></button>`;
+    if(name==='hot') actions.innerHTML=`<button class="forum-icon-btn" onclick="refreshForumPosts()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z"/></svg></button>`;
+    if(name==='dm') actions.innerHTML=`<button class="forum-icon-btn" onclick="refreshForumDM()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z"/></svg></button>`;
+    if(name==='mine') actions.innerHTML=`<button class="forum-mini-btn" onclick="editForumMine()">编辑</button>`;
+}
+
+async function renderForumHot(){const q=(document.getElementById('forum-hot-search')?.value||'').trim();const posts=await getForumPosts();const sorted=[...posts].sort((a,b)=>(b.likes+b.replies*2+b.reposts*3)-(a.likes+a.replies*2+a.reposts*3)).filter(p=>!q||String(p.title+p.body+p.author).includes(q)).slice(0,30);document.getElementById('forum-hot-list').innerHTML=sorted.length?sorted.map((p,i)=>`<div class="forum-hot-item"><div class="forum-rank">${i+1}</div><div class="forum-hot-title">${forumEscape(p.title||'无标题')}</div><div class="forum-hot-count">${(p.likes||0)+(p.replies||0)*2+(p.reposts||0)*3} 热度</div></div>`).join(''):'<div class="forum-empty">暂无热搜，刷新或发帖后会自动生成。</div>';}
+async function renderForumDM(){const contacts=await getContacts();let dms=await dbGet('forum_dms',[]);if(!dms.length&&contacts.length){dms=contacts.slice(0,8).map((c,i)=>({name:forumContactName(c),snippet:'论坛私信会在这里显示。',time:i?'昨天':'刚刚'}));await dbSet('forum_dms',dms);}document.getElementById('forum-dm-list').innerHTML=dms.length?dms.map(d=>`<div class="forum-dm-item"><div class="forum-avatar">${forumAvatarHtml(d.avatar,d.name)}</div><div class="forum-dm-content"><div class="forum-dm-name">${forumEscape(d.name)}</div><div class="forum-dm-snippet">${forumEscape(d.snippet)}</div></div><div class="forum-dm-time">${forumEscape(d.time)}</div></div>`).join(''):'<div class="forum-empty">暂无私信。</div>';}
+async function refreshForumDM(){const contacts=await getContacts();const dms=contacts.slice(0,12).map((c,i)=>({name:forumContactName(c),avatar:c.avatar||c.char?.avatar||'',snippet:['刚刚看到了你的帖子。','这个设定很有意思。','要不要开一个新话题？','论坛那边有人在讨论你。'][i%4],time:forumNowText()}));await dbSet('forum_dms',dms);await renderForumDM();}
+async function getForumMine(){const defName=await dbGet('wechat_nickname','微信用户');const defAvatar=await dbGet('wechat_avatar','');return Object.assign({name:defName,avatar:defAvatar,cover:'',join:'加入于 2026-05-09',fans:0,following:0,likes:0},await dbGet('forum_mine',{}));}
+function setForumMineTab(t){forumMineTab=t;renderForumMine();}
+async function renderForumMine(){const m=await getForumMine();const posts=await getForumPosts();const minePosts=posts.filter(p=>p.mine);const tabPosts=forumMineTab==='posts'?minePosts:forumMineTab==='reply'?posts.filter(p=>!p.mine).slice(0,10):posts.filter(p=>(p.reposts||0)>0).slice(0,10);document.getElementById('forum-mine-content').innerHTML=`<div class="forum-mine-cover" onclick="editForumMine()">${m.cover?`<img src="${forumEscape(m.cover)}">`:''}</div><div class="forum-mine-card" onclick="editForumMine()"><div class="forum-mine-top"><div class="forum-mine-avatar">${forumAvatarHtml(m.avatar,m.name)}</div><div><div class="forum-mine-name">${forumEscape(m.name)}</div><div class="forum-mine-join">♡ ${forumEscape(m.join)}</div></div></div><div class="forum-mine-stats"><span><b>${forumEscape(m.fans)}</b>粉丝</span><span><b>${forumEscape(m.following)}</b>关注</span><span><b>${forumEscape(m.likes)}</b>获赞</span></div></div><div class="forum-mine-tabs"><button class="${forumMineTab==='posts'?'active':''}" onclick="event.stopPropagation();setForumMineTab('posts')">帖子</button><button class="${forumMineTab==='reply'?'active':''}" onclick="event.stopPropagation();setForumMineTab('reply')">回复</button><button class="${forumMineTab==='repost'?'active':''}" onclick="event.stopPropagation();setForumMineTab('repost')">转发</button></div><div class="forum-post-list">${tabPosts.length?tabPosts.map(renderForumPost).join(''):'<div class="forum-empty">这里还没有内容。</div>'}</div>`;}
+async function editForumMine(){const m=await getForumMine();openForumModal('编辑我的主页',`<div class="forum-modal-field"><div class="forum-label">头像（图片链接或 Base64）</div><input id="fm-avatar" class="modal-input" value="${forumEscape(m.avatar||'')}"></div><div class="forum-modal-field"><div class="forum-label">背景图（图片链接或 Base64）</div><input id="fm-cover" class="modal-input" value="${forumEscape(m.cover||'')}"></div><div class="forum-modal-field"><div class="forum-label">昵称</div><input id="fm-name" class="modal-input" value="${forumEscape(m.name)}"></div><div class="forum-modal-field"><div class="forum-label">日历线条 + 加入时间</div><input id="fm-join" class="modal-input" value="${forumEscape(m.join)}"></div><div class="forum-modal-field"><div class="forum-label">粉丝</div><input id="fm-fans" class="modal-input" value="${forumEscape(m.fans)}"></div><div class="forum-modal-field"><div class="forum-label">关注</div><input id="fm-following" class="modal-input" value="${forumEscape(m.following)}"></div><div class="forum-modal-field"><div class="forum-label">获赞数</div><input id="fm-likes" class="modal-input" value="${forumEscape(m.likes)}"></div>`,async()=>{const next={avatar:document.getElementById('fm-avatar').value,cover:document.getElementById('fm-cover').value,name:document.getElementById('fm-name').value||'微信用户',join:document.getElementById('fm-join').value||'加入于 2026-05-09',fans:document.getElementById('fm-fans').value||0,following:document.getElementById('fm-following').value||0,likes:document.getElementById('fm-likes').value||0};await dbSet('forum_mine',next);closeForumModal();await renderForumMine();});}
+
+async function openForumCompose(){forumComposeImages=[];const m=await getForumMine();document.getElementById('forum-compose-avatar').innerHTML=forumAvatarHtml(m.avatar,m.name);document.getElementById('forum-compose-id').textContent=`${m.name} · @me`;document.getElementById('forum-compose-time').textContent=forumNowText();document.getElementById('forum-compose-title').value='';document.getElementById('forum-compose-content').value='';renderForumComposeImages();document.getElementById('page-forum-compose').classList.add('active');showMainDock(false);}
+function closeForumCompose(){document.getElementById('page-forum-compose').classList.remove('active');}
+function renderForumComposeImages(){const box=document.getElementById('forum-compose-images');box.innerHTML=forumComposeImages.map((x,i)=>`<div class="forum-compose-thumb">${x.type==='desc'?`<div class="forum-image-note">${forumEscape(x.content)}</div>`:`<img src="${x.content}">`}<button class="forum-compose-remove" onclick="removeForumComposeImage(${i})">×</button></div>`).join('');}
+function removeForumComposeImage(i){forumComposeImages.splice(i,1);renderForumComposeImages();}
+function addForumImageDescription(){if(forumComposeImages.length>=9)return alert('一条帖子最多添加9张图片');forumPrompt('添加文字描述图片','图片描述','',desc=>{if(!desc)return;forumComposeImages.push({type:'desc',content:desc});renderForumComposeImages();});}
+function handleForumImageFiles(e){const remain=9-forumComposeImages.length;const files=Array.from(e.target.files||[]).slice(0,remain);if(!files.length)return;if((e.target.files||[]).length>remain)alert('一条帖子最多添加9张图片，已自动截取前面的图片');let left=files.length;files.forEach(file=>{const r=new FileReader();r.onload=ev=>{forumComposeImages.push({type:'image',content:ev.target.result});left--;if(left===0)renderForumComposeImages();};r.readAsDataURL(file);});e.target.value='';}
+async function publishForumPost(){const title=document.getElementById('forum-compose-title').value.trim();const body=document.getElementById('forum-compose-content').value.trim();if(!title&&!body)return alert('请输入帖子标题或正文');const m=await getForumMine();const posts=await getForumPosts();posts.unshift({id:Date.now(),author:m.name,idText:'@me',time:forumNowText(),group:currentForumGroup,title:title||'无标题',body,images:[...forumComposeImages],likes:0,replies:0,reposts:0,mine:true,avatar:m.avatar});await setForumPosts(posts);closeForumCompose();await renderForumPosts();await renderForumHot();await renderForumMine();}
+
+async function callForumApi(promptText){let url=(await dbGet('chat_api_url','')).trim();const key=(await dbGet('chat_api_key','')).trim();const model=(await dbGet('chat_api_model','')).trim();const temperature=Number(await dbGet('chat_api_temperature',0.7));if(!url||!key||!model)throw new Error('请先在 设置 > 聊天API 中填写 API 网址、密钥和模型');if(!url.endsWith('/v1')&&!url.endsWith('/v1/'))url=url.replace(/\/$/,'')+'/v1';const res=await fetch(`${url}/chat/completions`,{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature,stream:false,messages:[{role:'system',content:'你是论坛帖子生成器，只输出 JSON 数组。每项包含 author,title,body,group,likes,replies,reposts。不要输出 Markdown。'},{role:'user',content:promptText}]})});if(!res.ok)throw new Error('API 请求失败：'+res.status);const data=await res.json();return data.choices?.[0]?.message?.content||'';}
+async function refreshForumPosts(){await saveForumConfig();const cfg=await dbGet('forum_config',{});const contacts=await getContacts();const selected=contacts.filter(c=>(cfg.selectedChars||[]).map(Number).includes(Number(c.id))).map(c=>forumContactName(c)+'：'+forumContactDetail(c)).join('\n');const wb=cfg.worldbookId?(await db.worldbook.get(Number(cfg.worldbookId))):null;const promptText=`请根据以下资料生成 6 条论坛帖子，分组只能从 ${forumGroups.join('、')} 中选择。\n世界观：${cfg.worldview||''}\n世界书：${wb?(wb.title+'\n'+(wb.content||'')):''}\nuser：${cfg.userName||''}\nuser设定：${cfg.userSetting||''}\n参与char：${selected}\n论坛NPC：${cfg.npc||''}\n关系网：${cfg.relationship||''}`;try{const raw=await callForumApi(promptText);const match=raw.match(/\[[\s\S]*\]/);const arr=JSON.parse(match?match[0]:raw);if(!Array.isArray(arr))throw new Error('API 未返回数组');const posts=await getForumPosts();const mapped=arr.slice(0,12).map((x,i)=>({id:Date.now()+i,author:x.author||'论坛NPC',idText:'@npc_'+(Date.now()+i),time:forumNowText(),group:forumGroups.includes(x.group)?x.group:currentForumGroup,title:x.title||'新帖',body:x.body||'',likes:Number(x.likes||Math.floor(Math.random()*100)),replies:Number(x.replies||Math.floor(Math.random()*20)),reposts:Number(x.reposts||Math.floor(Math.random()*8))}));await setForumPosts([...mapped,...posts]);await renderForumPosts();await renderForumHot();await renderForumMine();alert('论坛帖子已刷新');}catch(e){alert('刷新失败：'+e.message);}}
+
+
         loadUserData();
     </script>
 </body>
