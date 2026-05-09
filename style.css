@@ -431,18 +431,6 @@
             margin-left: 8px;
             border: none;
         }
-        
-        .message-row.other .message-bubble::before {
-            content: '';
-            position: absolute;
-            left: -5px;
-            top: 11px;
-            width: 0;
-            height: 0;
-            border-top: 5px solid transparent;
-            border-bottom: 5px solid transparent;
-            border-right: 5px solid #ffffff;
-        }
 
         
         .message-row.self .message-bubble {
@@ -451,18 +439,10 @@
             margin-right: 8px;
             border: none;
         }
-        
-        .message-row.self .message-bubble::after {
-            content: '';
-            position: absolute;
-            right: -5px;
-            top: 11px;
-            width: 0;
-            height: 0;
-            border-top: 5px solid transparent;
-            border-bottom: 5px solid transparent;
-            border-left: 5px solid #000000;
-        }
+
+
+/* [CHAT-BUBBLE-TAIL-FIX] 去掉聊天气泡尖角，避免右侧出现竖线/黑线 */
+.message-row.other .message-bubble::before,
 
 .message-action-bar {
     position: absolute;
@@ -1157,8 +1137,9 @@
 
 .chat-avatar-unread-badge {
     position: absolute;
-    top: -6px;
-    right: -7px;
+    top: 0;
+    right: 0;
+    transform: translate(45%, -45%);
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
@@ -1169,8 +1150,8 @@
     font-weight: 700;
     line-height: 18px;
     text-align: center;
+    z-index: 30;
     box-sizing: border-box;
-    z-index: 5;
     pointer-events: none;
 }
 
@@ -1832,3 +1813,43 @@
 .emoji-manage-bar select{min-width:0;flex:1;height:32px;border:none;border-radius:10px;background:#f0f0f0;padding:0 8px;font-size:12px;}
 .emoji-manage-bar button{height:32px;border:none;border-radius:10px;background:#111;color:#fff;padding:0 12px;font-weight:800;font-size:12px;}
 .emoji-add-textarea{min-height:180px;resize:none;}
+
+
+/* [FORCE-NO-BUBBLE-TAIL] 彻底禁用聊天气泡伪元素尖角，避免任何竖线残留 */
+.message-row.other .message-bubble::before,
+.message-row.other .message-bubble::after,
+.message-row.self .message-bubble::before,
+.message-row.self .message-bubble::after {
+    content: none !important;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: 0 !important;
+}
+.chat-list-item .list-icon-wrap {
+    position: relative !important;
+    overflow: visible !important;
+}
+.chat-list-item .list-icon-wrap img {
+    display: block;
+}
+
+
+/* unread badge must be anchored to the avatar top-right corner */
+.chat-list-item .list-icon-wrap {
+    width: 40px !important;
+    height: 40px !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+.chat-list-item .list-icon-wrap img {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    display: block !important;
+}
+.chat-list-item .list-icon-wrap .chat-avatar-unread-badge {
+    top: 0 !important;
+    right: 0 !important;
+    transform: translate(45%, -45%) !important;
+}
