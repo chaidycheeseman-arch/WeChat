@@ -2044,3 +2044,33 @@
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+/* ========== [PATCH-006A] 支付页缩放协调 + 账单 + 数据管理 ========== */
+.update-global-modal{background-color:rgba(0,0,0,.5);z-index:999;}
+.update-global-modal .update-card{width:min(78vw,310px);max-width:310px;aspect-ratio:auto;min-height:420px;border-radius:18px;padding:20px 18px 16px;background:#fff;}
+.update-global-modal .update-version-badge{border:none;background:transparent;color:#9a9a9a;padding:0;margin-top:7px;font-size:12px;}
+.payment-nav{height:72px;padding:24px 18px 0 17px;align-items:flex-start;position:relative;}
+.payment-nav-title{font-size:24px;line-height:34px;font-weight:650;position:absolute;left:50%;transform:translateX(-50%);margin:0;}
+.payment-bill-btn{border:none;background:transparent;color:#111;font-size:15px;font-weight:650;height:34px;padding:0 2px;margin-left:auto;}
+.payment-content-area{padding-bottom:calc(22px + env(safe-area-inset-bottom));}
+.payment-balance-section{padding-top:74px;}
+.payment-coin-icon{width:60px;height:60px;font-size:38px;margin-bottom:42px;}
+.payment-balance-label{font-size:21px;margin-bottom:18px;}
+.payment-balance-value{font-size:48px;margin-bottom:24px;letter-spacing:-.04em;}
+.payment-link-text{font-size:15px;padding:0 20px;}
+.payment-actions-section{padding:0 50px;gap:16px;}
+.payment-action-btn{height:50px;border-radius:12px;font-size:22px;}
+.payment-footer{padding-top:58px;gap:12px;}
+.payment-faq-btn{font-size:16px;}.payment-provider-text{font-size:13px;}
+.payment-bills-content{flex:1;overflow-y:auto;padding:84px 18px calc(20px + env(safe-area-inset-bottom));background:#fff;}
+.payment-bill-empty{text-align:center;color:#999;font-size:14px;padding-top:42px;}
+.payment-bill-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:1px solid #f0f0f0;}
+.payment-bill-title{font-size:15px;font-weight:750;color:#111;}.payment-bill-time{font-size:12px;color:#999;margin-top:4px;}.payment-bill-amount{font-size:18px;font-weight:850;color:#111;white-space:nowrap;}
+.data-manage-content{padding:18px;background:#f7f7f7;overflow-y:auto;}
+.data-card{background:#fff;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.04);}
+.data-card-title{font-size:18px;font-weight:850;margin-bottom:8px;color:#111;}.data-card-desc{font-size:13px;line-height:1.65;color:#777;margin-bottom:14px;}
+.data-card .form-input{margin-bottom:10px;background:#f7f7f7;border:none;border-radius:10px;height:42px;}
+.data-action-btn{width:100%;height:46px;border:none;border-radius:12px;background:#ededed;color:#111;font-size:15px;font-weight:800;margin-top:10px;}
+.data-action-btn.primary{background:#111;color:#fff;}.data-action-btn.danger{background:#fff1f1;color:#d11;border:1px solid #ffd5d5;}
+.data-status{min-height:18px;margin-top:12px;font-size:12px;color:#777;line-height:1.5;word-break:break-all;}
+@media (max-width:420px){.payment-balance-section{padding-top:62px}.payment-coin-icon{width:56px;height:56px;font-size:36px;margin-bottom:38px}.payment-balance-value{font-size:46px}.payment-actions-section{padding:0 44px}.payment-footer{padding-top:48px}}

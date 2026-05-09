@@ -534,7 +534,7 @@
         function closeSettings() { document.getElementById('page-settings').classList.remove('active'); document.querySelector('.dock').style.display = 'flex'; }
 
         // ========== [PAYMENT] 支付 / 零钱页 ==========
-        let walletBalance = 10.8;
+        let walletBalance = 0;
         let currentPaymentAction = 'recharge';
 
         function formatWalletAmount(amount) {
@@ -548,9 +548,9 @@
         }
 
         async function initPaymentPage() {
-            const savedBalance = await dbGet('wallet_balance', 10.8);
+            const savedBalance = await dbGet('wallet_balance', 0);
             const parsed = Number(savedBalance);
-            walletBalance = Number.isFinite(parsed) ? parsed : 10.8;
+            walletBalance = Number.isFinite(parsed) ? parsed : 0;
             updateWalletDisplay();
         }
 
@@ -612,11 +612,42 @@
                 walletBalance = Number((walletBalance + fixedAmount).toFixed(2));
             }
             await dbSet('wallet_balance', walletBalance);
+            await addWalletBill(currentPaymentAction, fixedAmount);
             updateWalletDisplay();
+            renderPaymentBills();
             closePaymentAmountModal();
             alert((currentPaymentAction === 'withdraw' ? '提现' : '充值') + '成功');
         }
-        
+
+        async function addWalletBill(type, amount) {
+            const bills = await dbGet('wallet_bills', []);
+            const safeBills = Array.isArray(bills) ? bills : [];
+            safeBills.unshift({ id: Date.now(), type, amount: Number(amount || 0), balance: walletBalance, timestamp: Date.now() });
+            await dbSet('wallet_bills', safeBills.slice(0, 300));
+        }
+        async function renderPaymentBills() {
+            const list = document.getElementById('payment-bills-list');
+            if (!list) return;
+            const bills = await dbGet('wallet_bills', []);
+            const safeBills = Array.isArray(bills) ? bills : [];
+            if (!safeBills.length) { list.innerHTML = '<div class="payment-bill-empty">暂无账单明细</div>'; return; }
+            list.innerHTML = safeBills.map(function(item){
+                const isOut = item.type === 'withdraw';
+                const title = isOut ? '提现' : '充值';
+                const sign = isOut ? '-' : '+';
+                const time = new Date(item.timestamp || Date.now()).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+                return '<div class="payment-bill-item"><div><div class="payment-bill-title">'+title+'</div><div class="payment-bill-time">'+time+'</div></div><div class="payment-bill-amount">'+sign+'¥ '+Number(item.amount||0).toFixed(2)+'</div></div>';
+            }).join('');
+        }
+        async function openPaymentBillsPage() {
+            await renderPaymentBills();
+            const page = document.getElementById('page-payment-bills');
+            if (page) page.classList.add('active');
+        }
+        function closePaymentBillsPage() {
+            const page = document.getElementById('page-payment-bills');
+            if (page) page.classList.remove('active');
+        }
 
 
         function escapeHtml(value) {
@@ -1597,6 +1628,37 @@ async function sendVoiceRecordMessage() {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+
+function openVoiceTextModal() {
+    closeChatExtraPanel();
+    const modal = document.getElementById('voice-text-modal');
+    const input = document.getElementById('voice-text-input');
+    if (input) input.value = '';
+    if (modal) modal.style.display = 'flex';
+    setTimeout(function(){ if (input) input.focus(); }, 30);
+}
+function closeVoiceTextModal() {
+    const modal = document.getElementById('voice-text-modal');
+    if (modal) modal.style.display = 'none';
+}
+async function sendVoiceTextMessage() {
+    if (!currentChatContact) return;
+    const input = document.getElementById('voice-text-input');
+    const text = String(input && input.value || '').trim();
+    if (!text) { alert('请输入录制内容'); return; }
+    const duration = Math.max(1, Math.ceil(text.replace(/\s/g, '').length / 3));
+    const msg = { role: 'user', type: 'voice', content: '语音 ' + duration + '"', voiceText: text, voiceAudio: '', voiceDuration: duration, timestamp: Date.now() };
+    await addMessage(currentChatContact.id, msg);
+    await updateRecentChats(currentChatContact.id, '[语音] ' + duration + '"', msg.timestamp);
+    closeVoiceTextModal();
+    await renderChatMessages();
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+window.openVoiceTextModal = openVoiceTextModal;
+window.closeVoiceTextModal = closeVoiceTextModal;
+window.sendVoiceTextMessage = sendVoiceTextMessage;
 window.openVoiceRecordModal = openVoiceRecordModal;
 window.closeVoiceRecordModal = closeVoiceRecordModal;
 window.startVoiceRecording = startVoiceRecording;
@@ -3650,8 +3712,144 @@ async function refreshForumPosts(){
 }
 
 
+
+// ========== [DATA-MANAGE] 导出 / 导入 / 清除 / GitHub 备份 ==========
+function openDataManagePage(){
+    const page=document.getElementById('page-data-manage');
+    if(page)page.classList.add('active');
+    const dock=document.querySelector('.dock');
+    if(dock)dock.style.display='none';
+    loadGithubBackupSettings();
+}
+function closeDataManagePage(){
+    const page=document.getElementById('page-data-manage');
+    if(page)page.classList.remove('active');
+    const dock=document.querySelector('.dock');
+    if(dock)dock.style.display='none';
+    // 返回仍停留在设置二级页，因此不恢复 dock
+}
+async function collectAllData(){
+    const tables=['kv','contacts','messages','worldbook','presets','customPresets'];
+    const data={ app:'WeChat-local-backup', version:(typeof APP_VERSION!=='undefined'?APP_VERSION:'unknown'), exportedAt:new Date().toISOString(), tables:{}, localStorage:{} };
+    for(const name of tables){
+        if(db[name]&&db[name].toArray) data.tables[name]=await db[name].toArray();
+    }
+    for(let i=0;i<localStorage.length;i++){
+        const key=localStorage.key(i);
+        if(key&&key.indexOf('__dexie_fallback__')===0) data.localStorage[key]=localStorage.getItem(key);
+    }
+    return data;
+}
+function downloadJsonData(data, filename){
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function exportAllData(){
+    try{ const data=await collectAllData(); downloadJsonData(data,'wechat-backup-'+Date.now()+'.json'); }
+    catch(e){ alert('导出失败：'+(e.message||e)); }
+}
+async function applyImportedData(data){
+    if(!data||!data.tables) throw new Error('备份文件格式不正确');
+    const tables=['kv','contacts','messages','worldbook','presets','customPresets'];
+    for(const name of tables){
+        if(db[name]&&db[name].clear) await db[name].clear();
+        const rows=Array.isArray(data.tables[name])?data.tables[name]:[];
+        for(const row of rows){ if(db[name]&&db[name].put) await db[name].put(row); }
+    }
+    if(data.localStorage&&typeof data.localStorage==='object'){
+        Object.keys(data.localStorage).forEach(k=>localStorage.setItem(k,data.localStorage[k]));
+    }
+}
+function importAllData(event){
+    const file=event.target.files&&event.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async function(e){
+        try{
+            const data=JSON.parse(String(e.target.result||'{}'));
+            if(!confirm('导入会覆盖当前本地数据，确定继续？'))return;
+            await applyImportedData(data);
+            alert('导入完成，将刷新页面。');
+            location.reload();
+        }catch(err){ alert('导入失败：'+(err.message||err)); }
+        finally{ event.target.value=''; }
+    };
+    reader.readAsText(file);
+}
+async function clearAllAppData(){
+    if(!confirm('确定清除所有本地数据？此操作不可撤销。'))return;
+    try{
+        const tables=['kv','contacts','messages','worldbook','presets','customPresets'];
+        for(const name of tables){ if(db[name]&&db[name].clear) await db[name].clear(); }
+        Object.keys(localStorage).filter(k=>k.indexOf('__dexie_fallback__')===0||k.indexOf('wechat_')===0||k.indexOf('worldbook_')===0||k.indexOf('update_ack_version')===0).forEach(k=>localStorage.removeItem(k));
+        alert('已清除所有数据，将刷新页面。');
+        location.reload();
+    }catch(e){ alert('清除失败：'+(e.message||e)); }
+}
+function setGithubStatus(text){const el=document.getElementById('github-backup-status');if(el)el.textContent=text||'';}
+function getGithubBackupSettings(){
+    return {
+        token:document.getElementById('github-token')?.value.trim()||'',
+        owner:document.getElementById('github-owner')?.value.trim()||'',
+        repo:document.getElementById('github-repo')?.value.trim()||'',
+        branch:document.getElementById('github-branch')?.value.trim()||'main',
+        path:document.getElementById('github-path')?.value.trim()||'wechat-backup.json'
+    };
+}
+function saveGithubBackupSettings(){
+    const s=getGithubBackupSettings();
+    dbSet('github_backup_settings',{owner:s.owner,repo:s.repo,branch:s.branch,path:s.path});
+}
+async function loadGithubBackupSettings(){
+    const s=await dbGet('github_backup_settings',{});
+    if(document.getElementById('github-owner'))document.getElementById('github-owner').value=s.owner||'';
+    if(document.getElementById('github-repo'))document.getElementById('github-repo').value=s.repo||'';
+    if(document.getElementById('github-branch'))document.getElementById('github-branch').value=s.branch||'main';
+    if(document.getElementById('github-path'))document.getElementById('github-path').value=s.path||'wechat-backup.json';
+}
+function utf8ToBase64(str){return btoa(unescape(encodeURIComponent(str)));}
+function base64ToUtf8(str){return decodeURIComponent(escape(atob(str)));}
+async function backupDataToGitHub(){
+    const s=getGithubBackupSettings();
+    if(!s.token||!s.owner||!s.repo){alert('请填写 Token、Owner 和 Repo');return;}
+    saveGithubBackupSettings();
+    try{
+        setGithubStatus('正在准备备份…');
+        const data=await collectAllData();
+        const api='https://api.github.com/repos/'+encodeURIComponent(s.owner)+'/'+encodeURIComponent(s.repo)+'/contents/'+s.path.split('/').map(encodeURIComponent).join('/');
+        let sha='';
+        const exist=await fetch(api+'?ref='+encodeURIComponent(s.branch),{headers:{Authorization:'Bearer '+s.token,Accept:'application/vnd.github+json'}});
+        if(exist.ok){const old=await exist.json();sha=old.sha||'';}
+        const body={message:'backup wechat data '+new Date().toISOString(),content:utf8ToBase64(JSON.stringify(data,null,2)),branch:s.branch};
+        if(sha)body.sha=sha;
+        const res=await fetch(api,{method:'PUT',headers:{Authorization:'Bearer '+s.token,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(!res.ok)throw new Error(await res.text());
+        setGithubStatus('GitHub 备份完成：'+s.path);
+    }catch(e){setGithubStatus('备份失败：'+(e.message||e));}
+}
+async function restoreDataFromGitHub(){
+    const s=getGithubBackupSettings();
+    if(!s.token||!s.owner||!s.repo){alert('请填写 Token、Owner 和 Repo');return;}
+    if(!confirm('从 GitHub 恢复会覆盖当前本地数据，确定继续？'))return;
+    saveGithubBackupSettings();
+    try{
+        setGithubStatus('正在读取 GitHub 备份…');
+        const api='https://api.github.com/repos/'+encodeURIComponent(s.owner)+'/'+encodeURIComponent(s.repo)+'/contents/'+s.path.split('/').map(encodeURIComponent).join('/')+'?ref='+encodeURIComponent(s.branch);
+        const res=await fetch(api,{headers:{Authorization:'Bearer '+s.token,Accept:'application/vnd.github+json'}});
+        if(!res.ok)throw new Error(await res.text());
+        const json=await res.json();
+        const data=JSON.parse(base64ToUtf8(String(json.content||'').replace(/\s/g,'')));
+        await applyImportedData(data);
+        setGithubStatus('恢复完成，将刷新页面。');
+        setTimeout(()=>location.reload(),500);
+    }catch(e){setGithubStatus('恢复失败：'+(e.message||e));}
+}
+
 // ========== [UPDATE-LOG] 每个版本显示一次更新内容 ==========
-const APP_VERSION = '0.0.06';
+const APP_VERSION = '0.0.07';
 const APP_UPDATE_LOG = [
     '修复 Dexie CDN 加载失败或离线打开时脚本整体中断的问题。',
     '加号拓展功能面板、语音录制、音乐页、支付页点击现在会正常响应。',
@@ -3669,6 +3867,7 @@ function initUpdateLog(){
     content.textContent=APP_UPDATE_LOG.map((item,index)=>(index+1)+'. '+item).join('\n');
     const acknowledged=localStorage.getItem('update_ack_version');
     if(acknowledged!==APP_VERSION){
+        modal.style.display='flex';
         modal.classList.add('show');
         modal.setAttribute('aria-hidden','false');
     }
@@ -3677,6 +3876,7 @@ function confirmUpdateLog(){
     localStorage.setItem('update_ack_version',APP_VERSION);
     const modal=document.getElementById('update-modal');
     if(modal){
+        modal.style.display='none';
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden','true');
     }
