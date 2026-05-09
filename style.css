@@ -1544,3 +1544,167 @@
 .update-know-btn span{width:24px;height:24px;border-radius:50%;background:#fff;display:inline-flex;align-items:center;justify-content:center;position:relative;}
 .update-know-btn span:before{content:'';width:7px;height:7px;border-top:2px solid #000;border-right:2px solid #000;transform:rotate(45deg);margin-left:-2px;}
 .settings-version-text{text-align:center;color:#b0b0b0;font-size:11px;line-height:1;padding:18px 0 26px;}
+
+/* ========== [PAYMENT] 黑白零钱详情页 ========== */
+.payment-page {
+    background: #f4f4f4;
+}
+.payment-nav {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    background: #f4f4f4;
+    flex-shrink: 0;
+}
+.payment-back-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.payment-back-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: #212121;
+}
+.payment-nav-title {
+    font-size: 17px;
+    line-height: 1;
+    color: #111111;
+    font-weight: 700;
+    margin-left: auto;
+}
+.payment-content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px 0 18px;
+    overflow-y: auto;
+}
+.payment-balance-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 72px;
+}
+.payment-coin-icon {
+    width: 106px;
+    height: 106px;
+    border-radius: 50%;
+    background: #111111;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 42px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+.payment-balance-label {
+    font-size: 27px;
+    line-height: 1.25;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+}
+.payment-balance-value {
+    font-size: 74px;
+    line-height: 1;
+    font-weight: 800;
+    color: #000000;
+    letter-spacing: -0.04em;
+    margin-bottom: 30px;
+}
+.payment-link-text {
+    border: none;
+    background: transparent;
+    color: #7a7a7a;
+    font-size: 18px;
+    line-height: 1.4;
+    font-weight: 500;
+    padding: 0 24px;
+}
+.payment-actions-section {
+    width: 100%;
+    padding: 0 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: auto;
+}
+.payment-action-btn {
+    width: 100%;
+    height: 58px;
+    border: none;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.payment-action-btn.primary {
+    background: #111111;
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+}
+.payment-action-btn.secondary {
+    background: #e8e8e8;
+    color: #111111;
+}
+.payment-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 36px;
+}
+.payment-faq-btn {
+    border: none;
+    background: transparent;
+    color: #666666;
+    font-size: 16px;
+    font-weight: 600;
+}
+.payment-provider-text {
+    color: #b8b8b8;
+    font-size: 13px;
+}
+.payment-modal-content {
+    max-width: 340px;
+}
+.payment-modal-tip {
+    color: #8f8f8f;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 14px;
+}
+@media (max-width: 420px) {
+    .payment-balance-section {
+        padding-top: 54px;
+    }
+    .payment-coin-icon {
+        width: 88px;
+        height: 88px;
+        font-size: 46px;
+        margin-bottom: 34px;
+    }
+    .payment-balance-label {
+        font-size: 22px;
+        margin-bottom: 16px;
+    }
+    .payment-balance-value {
+        font-size: 60px;
+        margin-bottom: 24px;
+    }
+    .payment-link-text {
+        font-size: 16px;
+    }
+}

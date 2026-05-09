@@ -146,7 +146,7 @@
                     </div>
                 </div>
                 <div class="me-list">
-                    <div class="list-item">
+                    <div class="list-item" onclick="openPaymentPage()">
                         <div class="list-icon-wrap">
                             <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
                         </div>
@@ -209,6 +209,45 @@
                             <svg class="list-arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-payment" class="page payment-page">
+            <div class="payment-nav">
+                <button class="payment-back-btn" onclick="closePaymentPage()" aria-label="返回">
+                    <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                </button>
+                <div class="payment-nav-title">零钱明细</div>
+            </div>
+            <div class="payment-content-area">
+                <div class="payment-balance-section">
+                    <div class="payment-coin-icon">¥</div>
+                    <div class="payment-balance-label">我的零钱</div>
+                    <div class="payment-balance-value" id="wallet-balance-text">¥ 10.80</div>
+                    <button class="payment-link-text" onclick="showPaymentHint()">转入零钱通，能赚又能花 ›</button>
+                </div>
+
+                <div class="payment-actions-section">
+                    <button class="payment-action-btn primary" onclick="openPaymentAmountModal('recharge')">充值</button>
+                    <button class="payment-action-btn secondary" onclick="openPaymentAmountModal('withdraw')">提现</button>
+                </div>
+
+                <div class="payment-footer">
+                    <button class="payment-faq-btn" onclick="showPaymentFaq()">常见问题</button>
+                    <div class="payment-provider-text">本服务由财付通提供</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="payment-amount-modal" class="modal-overlay">
+            <div class="modal-content payment-modal-content">
+                <div class="modal-title" id="payment-modal-title">充值</div>
+                <div class="payment-modal-tip" id="payment-modal-tip">请输入金额</div>
+                <input type="number" id="payment-amount-input" class="modal-input" placeholder="请输入金额" min="0" step="0.01" inputmode="decimal">
+                <div class="modal-actions">
+                    <button class="modal-btn" onclick="closePaymentAmountModal()">取消</button>
+                    <button class="modal-btn confirm" onclick="confirmPaymentAmountAction()">确定</button>
                 </div>
             </div>
         </div>

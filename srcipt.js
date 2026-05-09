@@ -69,7 +69,7 @@
                 'chat_api_url', 'chat_api_key', 'chat_api_model', 'chat_api_model_options',
                 'chat_api_history', 'chat_api_temperature',
                 'moments_background', 'moments_avatar', 'moments_nickname', 'moments_signature',
-                'wechat_recent_chats', 'wechat_pinned_chats'
+                'wechat_recent_chats', 'wechat_pinned_chats', 'wallet_balance'
             ];
             for (const k of simpleKeys) {
                 const v = localStorage.getItem(k);
@@ -430,6 +430,90 @@
 
         function openSettings() { document.getElementById('page-settings').classList.add('active'); document.querySelector('.dock').style.display = 'none'; }
         function closeSettings() { document.getElementById('page-settings').classList.remove('active'); document.querySelector('.dock').style.display = 'flex'; }
+
+        // ========== [PAYMENT] 支付 / 零钱页 ==========
+        let walletBalance = 10.8;
+        let currentPaymentAction = 'recharge';
+
+        function formatWalletAmount(amount) {
+            const num = Number(amount || 0);
+            return '¥ ' + num.toFixed(2);
+        }
+
+        function updateWalletDisplay() {
+            const balanceEl = document.getElementById('wallet-balance-text');
+            if (balanceEl) balanceEl.textContent = formatWalletAmount(walletBalance);
+        }
+
+        async function initPaymentPage() {
+            const savedBalance = await dbGet('wallet_balance', 10.8);
+            const parsed = Number(savedBalance);
+            walletBalance = Number.isFinite(parsed) ? parsed : 10.8;
+            updateWalletDisplay();
+        }
+
+        async function openPaymentPage() {
+            await initPaymentPage();
+            document.getElementById('page-payment').classList.add('active');
+            document.querySelector('.dock').style.display = 'none';
+        }
+
+        function closePaymentPage() {
+            document.getElementById('page-payment').classList.remove('active');
+            document.querySelector('.dock').style.display = 'flex';
+        }
+
+        function showPaymentHint() {
+            alert('零钱通入口已预留，后续可继续完善收益与转入转出逻辑。');
+        }
+
+        function showPaymentFaq() {
+            alert('常见问题：可点击充值增加零钱余额；余额充足时可点击提现减少零钱余额。');
+        }
+
+        function openPaymentAmountModal(action) {
+            currentPaymentAction = action === 'withdraw' ? 'withdraw' : 'recharge';
+            const modal = document.getElementById('payment-amount-modal');
+            const title = document.getElementById('payment-modal-title');
+            const tip = document.getElementById('payment-modal-tip');
+            const input = document.getElementById('payment-amount-input');
+            if (title) title.textContent = currentPaymentAction === 'withdraw' ? '提现' : '充值';
+            if (tip) tip.textContent = currentPaymentAction === 'withdraw' ? '请输入提现金额' : '请输入充值金额';
+            if (input) {
+                input.value = '';
+                input.placeholder = currentPaymentAction === 'withdraw' ? '请输入提现金额' : '请输入充值金额';
+            }
+            if (modal) modal.style.display = 'flex';
+            setTimeout(function(){ if (input) input.focus(); }, 30);
+        }
+
+        function closePaymentAmountModal() {
+            const modal = document.getElementById('payment-amount-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function confirmPaymentAmountAction() {
+            const input = document.getElementById('payment-amount-input');
+            const amount = Number(input ? input.value : 0);
+            if (!Number.isFinite(amount) || amount <= 0) {
+                alert('请输入正确金额');
+                return;
+            }
+            const fixedAmount = Number(amount.toFixed(2));
+            if (currentPaymentAction === 'withdraw') {
+                if (fixedAmount > walletBalance) {
+                    alert('零钱余额不足');
+                    return;
+                }
+                walletBalance = Number((walletBalance - fixedAmount).toFixed(2));
+            } else {
+                walletBalance = Number((walletBalance + fixedAmount).toFixed(2));
+            }
+            await dbSet('wallet_balance', walletBalance);
+            updateWalletDisplay();
+            closePaymentAmountModal();
+            alert((currentPaymentAction === 'withdraw' ? '提现' : '充值') + '成功');
+        }
         
         function openChatApiPage() { document.getElementById('page-chat-api').classList.add('active'); }
         function closeChatApiPage() { document.getElementById('page-chat-api').classList.remove('active'); }
@@ -2094,6 +2178,8 @@ async function saveChatApiSettings() {
             if (savedSignature) {
                 document.getElementById('moments-signature').textContent = savedSignature;
             }
+
+            await initPaymentPage();
 
             // [DB-READ] 渲染联系人和消息列表
             await renderContacts();
