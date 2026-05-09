@@ -164,7 +164,7 @@
                             <svg class="list-arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
                         </div>
                     </div>
-                    <div class="list-item">
+                    <div class="list-item" onclick="openEmojiPage()">
                         <div class="list-icon-wrap">
                             <svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z M8.5 7c.83 0 1.5.67 1.5 1.5S9.33 10 8.5 10 7 9.33 7 8.5 7.67 7 8.5 7z M15.5 7c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5z M12 17.5c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z"/></svg>
                         </div>
@@ -252,6 +252,42 @@
             </div>
         </div>
 
+
+        <div id="page-emoji" class="page emoji-page">
+            <div class="nav-bar emoji-nav">
+                <div class="nav-left-btn" onclick="closeEmojiPage()">
+                    <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                </div>
+                <div class="nav-title">表情</div>
+                <div class="emoji-nav-actions">
+                    <button class="emoji-icon-btn" onclick="openEmojiAddModal()" aria-label="添加表情">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                    <button class="emoji-icon-btn" onclick="toggleEmojiManage()" aria-label="管理表情">
+                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2 1.57 9.06-9.06 1.18 1.18L6.18 20H5v-1.18zM18.71 9.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="emoji-group-strip" id="emoji-group-strip"></div>
+            <div class="emoji-content" id="emoji-content"></div>
+            <div class="emoji-manage-bar" id="emoji-manage-bar" style="display:none;">
+                <span id="emoji-selected-count">已选 0</span>
+                <select id="emoji-move-target"></select>
+                <button onclick="moveSelectedEmojiItems()">移动</button>
+                <button onclick="deleteSelectedEmojiItems()">删除</button>
+            </div>
+        </div>
+
+        <div id="emoji-add-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">添加表情包</div>
+                <textarea id="emoji-add-input" class="form-textarea emoji-add-textarea" placeholder="描述：URL&#10;描述 URL&#10;URL 描述&#10;每行一个，可批量添加"></textarea>
+                <div class="modal-actions">
+                    <button class="modal-btn" onclick="closeEmojiAddModal()">取消</button>
+                    <button class="modal-btn confirm" onclick="confirmAddEmojiItems()">添加</button>
+                </div>
+            </div>
+        </div>
         
         <div id="page-chat" class="page">
             <div class="nav-bar">

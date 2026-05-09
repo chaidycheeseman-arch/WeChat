@@ -515,7 +515,207 @@
             alert((currentPaymentAction === 'withdraw' ? '提现' : '充值') + '成功');
         }
         
-        function openChatApiPage() { document.getElementById('page-chat-api').classList.add('active'); }
+
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function(ch) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+            });
+        }
+
+        // ========== [EMOJI-PAGE] 表情包页面 / 分组 / 持久化 ==========
+        let emojiState = null;
+        let currentEmojiGroupId = 'default';
+        let emojiManageMode = false;
+        let selectedEmojiItemIds = new Set();
+
+        function createDefaultEmojiState() {
+            return {
+                groups: [{ id: 'default', name: '默认', fixed: true }],
+                items: []
+            };
+        }
+
+        async function loadEmojiState() {
+            const saved = await dbGet('wechat_emoji_state', null);
+            const base = saved && Array.isArray(saved.groups) && Array.isArray(saved.items) ? saved : createDefaultEmojiState();
+            if (!base.groups.some(g => g.id === 'default')) base.groups.unshift({ id: 'default', name: '默认', fixed: true });
+            base.groups = base.groups.map(g => g.id === 'default' ? { ...g, name: '默认', fixed: true } : g);
+            emojiState = base;
+            if (!emojiState.groups.some(g => g.id === currentEmojiGroupId)) currentEmojiGroupId = 'default';
+            return emojiState;
+        }
+
+        async function saveEmojiState() {
+            if (!emojiState) emojiState = createDefaultEmojiState();
+            await dbSet('wechat_emoji_state', emojiState);
+        }
+
+        async function openEmojiPage() {
+            await loadEmojiState();
+            document.getElementById('page-emoji').classList.add('active');
+            document.querySelector('.dock').style.display = 'none';
+            renderEmojiPage();
+        }
+
+        function closeEmojiPage() {
+            document.getElementById('page-emoji').classList.remove('active');
+            document.querySelector('.dock').style.display = 'flex';
+            emojiManageMode = false;
+            selectedEmojiItemIds.clear();
+        }
+
+        function renderEmojiPage() {
+            if (!emojiState) emojiState = createDefaultEmojiState();
+            renderEmojiGroups();
+            renderEmojiItems();
+            renderEmojiManageBar();
+        }
+
+        function renderEmojiGroups() {
+            const strip = document.getElementById('emoji-group-strip');
+            if (!strip) return;
+            strip.innerHTML = emojiState.groups.map(group => {
+                const active = group.id === currentEmojiGroupId ? ' active' : '';
+                const closeBtn = group.fixed ? '' : `<button class="emoji-group-close" onclick="event.stopPropagation(); deleteEmojiGroup('${group.id}')">×</button>`;
+                return `<button class="emoji-group-pill${active}" onclick="switchEmojiGroup('${group.id}')"><span>${escapeHtml(group.name)}</span>${closeBtn}</button>`;
+            }).join('') + `<button class="emoji-group-pill add" onclick="createEmojiGroup()">＋</button>`;
+        }
+
+        function renderEmojiItems() {
+            const content = document.getElementById('emoji-content');
+            if (!content) return;
+            const list = emojiState.items.filter(item => item.groupId === currentEmojiGroupId);
+            if (list.length === 0) {
+                content.innerHTML = '<div class="emoji-empty">暂无表情包</div>';
+                return;
+            }
+            content.innerHTML = `<div class="emoji-grid">${list.map(item => `
+                <div class="emoji-card">
+                    ${emojiManageMode ? `<input class="emoji-check" type="checkbox" ${selectedEmojiItemIds.has(item.id) ? 'checked' : ''} onchange="toggleEmojiSelected('${item.id}', this.checked)">` : ''}
+                    <img class="emoji-card-img" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.desc || '表情包')}" onerror="this.style.opacity='.25'">
+                    <div class="emoji-card-desc">${escapeHtml(item.desc || '未命名')}</div>
+                </div>
+            `).join('')}</div>`;
+        }
+
+        function renderEmojiManageBar() {
+            const bar = document.getElementById('emoji-manage-bar');
+            const count = document.getElementById('emoji-selected-count');
+            const target = document.getElementById('emoji-move-target');
+            if (!bar || !count || !target) return;
+            bar.style.display = emojiManageMode ? 'flex' : 'none';
+            count.textContent = '已选 ' + selectedEmojiItemIds.size;
+            target.innerHTML = emojiState.groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+            target.value = currentEmojiGroupId;
+        }
+
+        function switchEmojiGroup(groupId) {
+            currentEmojiGroupId = groupId;
+            selectedEmojiItemIds.clear();
+            renderEmojiPage();
+        }
+
+        async function createEmojiGroup() {
+            const name = prompt('请输入分组名');
+            const finalName = (name || '').trim();
+            if (!finalName) return;
+            if (!emojiState) await loadEmojiState();
+            const id = 'group_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            emojiState.groups.push({ id, name: finalName, fixed: false });
+            currentEmojiGroupId = id;
+            await saveEmojiState();
+            renderEmojiPage();
+        }
+
+        async function deleteEmojiGroup(groupId) {
+            if (groupId === 'default') return;
+            if (!confirm('删除该分组后，分组内表情将移至默认分组。')) return;
+            emojiState.groups = emojiState.groups.filter(g => g.id !== groupId);
+            emojiState.items = emojiState.items.map(item => item.groupId === groupId ? { ...item, groupId: 'default' } : item);
+            if (currentEmojiGroupId === groupId) currentEmojiGroupId = 'default';
+            selectedEmojiItemIds.clear();
+            await saveEmojiState();
+            renderEmojiPage();
+        }
+
+        function openEmojiAddModal() {
+            const modal = document.getElementById('emoji-add-modal');
+            const input = document.getElementById('emoji-add-input');
+            if (input) input.value = '';
+            if (modal) modal.style.display = 'flex';
+            setTimeout(function(){ if (input) input.focus(); }, 30);
+        }
+
+        function closeEmojiAddModal() {
+            const modal = document.getElementById('emoji-add-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function parseEmojiLine(line) {
+            const trimmed = line.trim();
+            if (!trimmed) return null;
+            const urlMatch = trimmed.match(/https?:\/\/\S+/i);
+            if (!urlMatch) return null;
+            const url = urlMatch[0].replace(/[，。；;]+$/, '');
+            let desc = trimmed.replace(urlMatch[0], '').replace(/[：:，,]+$/g, '').replace(/^[：:，,]+/g, '').trim();
+            if (!desc) desc = '表情包';
+            return { desc, url };
+        }
+
+        async function confirmAddEmojiItems() {
+            if (!emojiState) await loadEmojiState();
+            const input = document.getElementById('emoji-add-input');
+            const lines = (input ? input.value : '').split(/\n+/).map(v => v.trim()).filter(Boolean);
+            const parsed = lines.map(parseEmojiLine).filter(Boolean);
+            if (parsed.length === 0) { alert('请按“描述：URL”或“描述 URL”格式添加'); return; }
+            const now = Date.now();
+            parsed.forEach((item, idx) => {
+                emojiState.items.push({
+                    id: 'emoji_' + (now + idx).toString(36) + Math.random().toString(36).slice(2, 6),
+                    groupId: currentEmojiGroupId || 'default',
+                    url: item.url,
+                    desc: item.desc,
+                    createdAt: now + idx
+                });
+            });
+            await saveEmojiState();
+            closeEmojiAddModal();
+            renderEmojiPage();
+        }
+
+        function toggleEmojiManage() {
+            emojiManageMode = !emojiManageMode;
+            selectedEmojiItemIds.clear();
+            renderEmojiPage();
+        }
+
+        function toggleEmojiSelected(id, checked) {
+            if (checked) selectedEmojiItemIds.add(id);
+            else selectedEmojiItemIds.delete(id);
+            renderEmojiManageBar();
+        }
+
+        async function moveSelectedEmojiItems() {
+            if (selectedEmojiItemIds.size === 0) return alert('请选择表情包');
+            const target = document.getElementById('emoji-move-target');
+            const targetGroupId = target ? target.value : 'default';
+            emojiState.items = emojiState.items.map(item => selectedEmojiItemIds.has(item.id) ? { ...item, groupId: targetGroupId } : item);
+            selectedEmojiItemIds.clear();
+            await saveEmojiState();
+            renderEmojiPage();
+        }
+
+        async function deleteSelectedEmojiItems() {
+            if (selectedEmojiItemIds.size === 0) return alert('请选择表情包');
+            if (!confirm('确认删除已选表情包？')) return;
+            emojiState.items = emojiState.items.filter(item => !selectedEmojiItemIds.has(item.id));
+            selectedEmojiItemIds.clear();
+            await saveEmojiState();
+            renderEmojiPage();
+        }
+
+                function openChatApiPage() { document.getElementById('page-chat-api').classList.add('active'); }
         function closeChatApiPage() { document.getElementById('page-chat-api').classList.remove('active'); }
 
         /** [MOMENTS-OPEN] 打开朋友圈，从 IndexedDB 读取背景/头像/昵称/签名 */
@@ -1231,61 +1431,46 @@ ${contactChar.detail || '（无特殊设定）'}
         document.getElementById(loadingBubbleId).remove();
 
         const bubbles = aiReply.split('|||').map(b => b.trim()).filter(b => b);
-        
-        // [DB-WRITE] 将AI回复消息批量追加到 IndexedDB messages 表
-        const generatedReplyMessages = [];
-        if (bubbles.length === 0) {
-            const msgTime = Date.now();
-            await addMessage(contactId, { role: 'assistant', content: aiReply, timestamp: msgTime });
-            generatedReplyMessages.push({ content: aiReply, timestamp: msgTime });
-        } else {
-            for (const bubbleStr of bubbles) {
-                try {
-                    const bubble = JSON.parse(bubbleStr);
-                    if (bubble.type && bubble.content) {
-                        const msgTime = Date.now();
-                        await addMessage(contactId, { role: 'assistant', content: bubble.content, timestamp: msgTime });
-                        generatedReplyMessages.push({ content: bubble.content, timestamp: msgTime });
-                    } else {
-                        const msgTime = Date.now();
-                        await addMessage(contactId, { role: 'assistant', content: bubbleStr, timestamp: msgTime });
-                        generatedReplyMessages.push({ content: bubbleStr, timestamp: msgTime });
-                    }
-                } catch (e) {
-                    console.log('JSON解析失败，当作普通文本:', bubbleStr);
-                    const msgTime = Date.now();
-                    await addMessage(contactId, { role: 'assistant', content: bubbleStr, timestamp: msgTime });
-                    generatedReplyMessages.push({ content: bubbleStr, timestamp: msgTime });
-                }
-            }
-        }
-
-        let previewText = '';
-        if (bubbles.length > 0) {
-            const firstBubble = bubbles[0];
+        const replyParts = bubbles.length > 0 ? bubbles : [aiReply];
+        const parsedReplyMessages = replyParts.map(function(bubbleStr) {
             try {
-                const parsed = JSON.parse(firstBubble);
-                previewText = parsed.content || firstBubble;
-            } catch {
-                previewText = firstBubble;
+                const bubble = JSON.parse(bubbleStr);
+                if (bubble && bubble.type && bubble.content) {
+                    return { type: bubble.type, content: bubble.content };
+                }
+            } catch (e) {
+                console.log('JSON解析失败，当作普通文本:', bubbleStr);
             }
-        } else {
-            previewText = aiReply.substring(0, 50);
+            return { type: 'text', content: bubbleStr };
+        }).filter(function(item) { return item && item.content; });
+
+        const wait = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
+        const CHAR_MESSAGE_INTERVAL = 1800;
+        let previewText = parsedReplyMessages[0] ? String(parsedReplyMessages[0].content).substring(0, 80) : aiReply.substring(0, 50);
+        let unreadAdded = false;
+
+        // [DB-WRITE] 逐条写入AI回复：第一条无延迟，后续每条间隔1.8秒
+        for (let i = 0; i < parsedReplyMessages.length; i++) {
+            if (i > 0) await wait(CHAR_MESSAGE_INTERVAL);
+            const item = parsedReplyMessages[i];
+            const msgTime = Date.now();
+            await addMessage(contactId, { role: 'assistant', type: item.type || 'text', content: item.content, timestamp: msgTime });
+            await updateRecentChats(contactId, item.content, msgTime);
+
+            const outsideCurrentChat = document.hidden || !currentChatContact || String(currentChatContact.id) !== String(contactId) || getActivePageId() !== 'page-chat';
+            if (outsideCurrentChat && !unreadAdded) {
+                incrementUnread(contactId);
+                unreadAdded = true;
+            }
+            notifyReplyMessage({ id: contactId, char: contactChar }, item.content, msgTime, 0);
+
+            if (currentChatContact && String(currentChatContact.id) === String(contactId)) {
+                await renderChatMessages();
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
         }
-        
-        // [DB-WRITE] 更新最近聊天列表
+
         await updateRecentChats(contactId, previewText, Date.now());
-
-        if (document.hidden || !currentChatContact || String(currentChatContact.id) !== String(contactId) || getActivePageId() !== 'page-chat') {
-            incrementUnread(contactId);
-        }
-        generatedReplyMessages.forEach(function(item, idx) {
-            notifyReplyMessage({ id: contactId, char: contactChar }, item.content, item.timestamp, idx);
-        });
-
-        if (currentChatContact && String(currentChatContact.id) === String(contactId)) {
-            await renderChatMessages();
-        }
 
         setTimeout(() => {
             chatContainer.scrollTop = chatContainer.scrollHeight;

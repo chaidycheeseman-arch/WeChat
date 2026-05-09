@@ -1547,37 +1547,38 @@
 
 /* ========== [PAYMENT] 黑白零钱详情页 ========== */
 .payment-page {
-    background: #f4f4f4;
+    background: #ffffff;
 }
 .payment-nav {
-    height: 60px;
+    height: 86px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    padding: 0 18px;
-    background: #f4f4f4;
+    padding: 34px 22px 0 20px;
+    background: #ffffff;
     flex-shrink: 0;
 }
 .payment-back-btn {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border: none;
     background: transparent;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 0;
 }
 .payment-back-btn svg {
-    width: 28px;
-    height: 28px;
-    fill: #212121;
+    width: 34px;
+    height: 34px;
+    fill: #1b1b1b;
 }
 .payment-nav-title {
-    font-size: 17px;
-    line-height: 1;
+    font-size: 28px;
+    line-height: 38px;
     color: #111111;
-    font-weight: 700;
+    font-weight: 500;
+    letter-spacing: -0.02em;
     margin-left: auto;
 }
 .payment-content-area {
@@ -1585,97 +1586,98 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 8px 0 18px;
+    padding: 0 0 calc(28px + env(safe-area-inset-bottom));
     overflow-y: auto;
+    background:#fff;
 }
 .payment-balance-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 72px;
+    padding-top: 114px;
 }
 .payment-coin-icon {
-    width: 106px;
-    height: 106px;
+    width: 88px;
+    height: 88px;
     border-radius: 50%;
     background: #111111;
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 56px;
-    font-weight: 700;
+    font-size: 54px;
+    font-weight: 800;
     line-height: 1;
-    margin-bottom: 42px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+    margin-bottom: 66px;
+    box-shadow: none;
 }
 .payment-balance-label {
-    font-size: 27px;
+    font-size: 28px;
     line-height: 1.25;
-    font-weight: 500;
-    color: #1a1a1a;
-    margin-bottom: 18px;
+    font-weight: 400;
+    color: #202020;
+    margin-bottom: 28px;
 }
 .payment-balance-value {
-    font-size: 74px;
-    line-height: 1;
-    font-weight: 800;
-    color: #000000;
-    letter-spacing: -0.04em;
-    margin-bottom: 30px;
+    font-size: 72px;
+    line-height: .95;
+    font-weight: 700;
+    color: #111111;
+    letter-spacing: -0.035em;
+    margin-bottom: 35px;
 }
 .payment-link-text {
     border: none;
     background: transparent;
-    color: #7a7a7a;
-    font-size: 18px;
+    color: #6f6f6f;
+    font-size: 22px;
     line-height: 1.4;
     font-weight: 500;
     padding: 0 24px;
 }
 .payment-actions-section {
     width: 100%;
-    padding: 0 32px;
+    padding: 0 60px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 26px;
     margin-top: auto;
 }
 .payment-action-btn {
     width: 100%;
-    height: 58px;
+    height: 64px;
     border: none;
-    border-radius: 16px;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    border-radius: 15px;
+    font-size: 29px;
+    font-weight: 650;
+    letter-spacing: 0;
 }
 .payment-action-btn.primary {
     background: #111111;
     color: #ffffff;
-    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    box-shadow: none;
 }
 .payment-action-btn.secondary {
-    background: #e8e8e8;
+    background: #f0f0f0;
     color: #111111;
 }
 .payment-footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding-top: 36px;
+    gap: 18px;
+    padding-top: 110px;
 }
 .payment-faq-btn {
     border: none;
     background: transparent;
-    color: #666666;
-    font-size: 16px;
-    font-weight: 600;
+    color: #687a99;
+    font-size: 22px;
+    font-weight: 650;
 }
 .payment-provider-text {
-    color: #b8b8b8;
-    font-size: 13px;
+    color: #b4b4b4;
+    font-size: 18px;
 }
 .payment-modal-content {
     max-width: 340px;
@@ -1687,24 +1689,41 @@
     margin-bottom: 14px;
 }
 @media (max-width: 420px) {
-    .payment-balance-section {
-        padding-top: 54px;
-    }
-    .payment-coin-icon {
-        width: 88px;
-        height: 88px;
-        font-size: 46px;
-        margin-bottom: 34px;
-    }
-    .payment-balance-label {
-        font-size: 22px;
-        margin-bottom: 16px;
-    }
-    .payment-balance-value {
-        font-size: 60px;
-        margin-bottom: 24px;
-    }
-    .payment-link-text {
-        font-size: 16px;
-    }
+    .payment-nav { height: 76px; padding: 26px 18px 0 17px; }
+    .payment-nav-title { font-size: 24px; line-height: 34px; }
+    .payment-balance-section { padding-top: 86px; }
+    .payment-coin-icon { width: 68px; height: 68px; font-size: 42px; margin-bottom: 54px; }
+    .payment-balance-label { font-size: 23px; margin-bottom: 24px; }
+    .payment-balance-value { font-size: 56px; margin-bottom: 30px; }
+    .payment-link-text { font-size: 17px; }
+    .payment-actions-section { padding: 0 46px; gap: 20px; }
+    .payment-action-btn { height: 54px; border-radius: 13px; font-size: 23px; }
+    .payment-footer { padding-top: 76px; gap: 14px; }
+    .payment-faq-btn { font-size: 17px; }
+    .payment-provider-text { font-size: 14px; }
 }
+
+/* ========== [EMOJI-PAGE] 表情包分组与管理 ========== */
+.emoji-page{background:#f7f7f7;}
+.emoji-nav{background:#f7f7f7;}
+.emoji-nav-actions{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:10px;}
+.emoji-icon-btn{width:34px;height:34px;border:none;background:transparent;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+.emoji-icon-btn svg{width:23px;height:23px;fill:#111;}
+.emoji-group-strip{height:34px;display:flex;align-items:center;gap:6px;padding:0 14px;overflow-x:auto;white-space:nowrap;background:#f7f7f7;scrollbar-width:none;}
+.emoji-group-strip::-webkit-scrollbar{display:none;}
+.emoji-group-pill{height:18px;border:none;border-radius:999px;background:#ededed;color:#333;display:inline-flex;align-items:center;gap:4px;padding:0 8px;font-size:10px;font-weight:650;line-height:18px;flex:0 0 auto;}
+.emoji-group-pill.active{background:#111;color:#fff;}
+.emoji-group-pill.add{font-size:13px;padding:0 8px;}
+.emoji-group-pill .emoji-group-close{width:12px;height:12px;border:none;border-radius:50%;background:rgba(0,0,0,.12);color:inherit;display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;padding:0;margin-right:-3px;}
+.emoji-group-pill.active .emoji-group-close{background:rgba(255,255,255,.22);}
+.emoji-content{flex:1;overflow-y:auto;padding:16px 14px 92px;}
+.emoji-empty{text-align:center;color:#999;font-size:13px;padding:68px 0;}
+.emoji-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.emoji-card{position:relative;min-width:0;background:#fff;border-radius:16px;padding:8px 8px 10px;box-shadow:0 8px 22px rgba(0,0,0,.04);}
+.emoji-card-img{width:100%;aspect-ratio:1/1;border-radius:12px;background:#f1f1f1;object-fit:cover;display:block;}
+.emoji-card-desc{font-size:11px;color:#444;line-height:1.25;margin-top:7px;text-align:center;word-break:break-word;min-height:14px;}
+.emoji-check{position:absolute;left:7px;top:7px;width:22px;height:22px;accent-color:#111;z-index:2;}
+.emoji-manage-bar{position:absolute;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));height:52px;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 10px 30px rgba(0,0,0,.10);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;font-weight:700;z-index:6;}
+.emoji-manage-bar select{min-width:0;flex:1;height:32px;border:none;border-radius:10px;background:#f0f0f0;padding:0 8px;font-size:12px;}
+.emoji-manage-bar button{height:32px;border:none;border-radius:10px;background:#111;color:#fff;padding:0 12px;font-weight:800;font-size:12px;}
+.emoji-add-textarea{min-height:180px;resize:none;}
