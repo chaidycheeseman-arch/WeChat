@@ -839,6 +839,7 @@
             if(!contact) return;
 
             currentChatContact = contact;
+            closeChatExtraPanel();
             
             // [UNREAD-CLEAR] 进入聊天后清除未读计数
             markAsRead(contact.id);
@@ -862,6 +863,7 @@
             document.getElementById('page-chat').classList.remove('active');
             document.querySelector('.dock').style.display = 'flex';
             closeActionBar(); 
+            closeChatExtraPanel();
             currentChatContact = null;
             renderChatList(); 
         }
@@ -914,8 +916,17 @@
                         <div class="quote-content">${msg.quoteData.content}</div>
                     </div>
                     <div class="message-reply-content">${msg.content}</div>`;
+                } else if (msg.type === 'image') {
+                    bubbleContent += `<img class="message-media-img" src="${escapeHtml(msg.content)}" alt="图片" onerror="this.outerHTML='<div class=&quot;message-special-card&quot;><div class=&quot;message-special-title&quot;>图片</div><div class=&quot;message-special-sub&quot;>加载失败</div></div>'">`;
+                } else if (msg.type === 'video') {
+                    bubbleContent += `<video class="message-media-video" controls src="${escapeHtml(msg.content)}"></video>`;
+                } else if (msg.type === 'file') {
+                    bubbleContent += `<div class="message-special-card"><div class="message-special-title">${escapeHtml(msg.fileName || '文件')}</div><div class="message-special-sub">${escapeHtml(msg.content || '已发送文件')}</div></div>`;
+                } else if (['location','redpacket','gift','transfer','voice','favorite','card','music'].includes(msg.type)) {
+                    const titles = { location: '位置', redpacket: '红包', gift: '礼物', transfer: '转账', voice: '语音', favorite: '收藏', card: '个人名片', music: '音乐' };
+                    bubbleContent += `<div class="message-special-card"><div class="message-special-title">${titles[msg.type] || '消息'}</div><div class="message-special-sub">${escapeHtml(msg.content || '')}</div></div>`;
                 } else {
-                    bubbleContent += msg.content;
+                    bubbleContent += escapeHtml(msg.content);
                 }
                 
                 html += `
@@ -1201,6 +1212,86 @@
             }
             closeActionBar();
         }
+
+function toggleChatExtraPanel() {
+    const panel = document.getElementById('chat-extra-panel');
+    const btn = document.querySelector('.chat-plus-toggle');
+    if (!panel) return;
+    const willOpen = !panel.classList.contains('active');
+    panel.classList.toggle('active', willOpen);
+    if (btn) btn.classList.toggle('active', willOpen);
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer && willOpen) chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function closeChatExtraPanel() {
+    const panel = document.getElementById('chat-extra-panel');
+    const btn = document.querySelector('.chat-plus-toggle');
+    if (panel) panel.classList.remove('active');
+    if (btn) btn.classList.remove('active');
+}
+
+function handleChatExtraAction(action) {
+    if (!currentChatContact) return;
+    const inputMap = {
+        camera: 'chat-camera-input',
+        image: 'chat-image-input',
+        video: 'chat-video-input',
+        file: 'chat-file-input'
+    };
+    if (inputMap[action]) {
+        const input = document.getElementById(inputMap[action]);
+        if (input) input.click();
+        return;
+    }
+    sendChatExtraMessage(action);
+}
+
+function handleChatPickedFile(event, type, label) {
+    const file = event.target.files && event.target.files[0];
+    if (!file || !currentChatContact) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const msg = {
+            role: 'user',
+            type: type,
+            content: e.target.result,
+            fileName: file.name || label,
+            timestamp: Date.now()
+        };
+        await addMessage(currentChatContact.id, msg);
+        await updateRecentChats(currentChatContact.id, '[' + label + ']', msg.timestamp);
+        event.target.value = '';
+        closeChatExtraPanel();
+        await renderChatMessages();
+        const chatContainer = document.getElementById('chat-messages');
+        if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function sendChatExtraMessage(action) {
+    if (!currentChatContact) return;
+    const actionText = {
+        location: '发送了一个位置',
+        redpacket: '发送了一个红包',
+        gift: '发送了一份礼物',
+        transfer: '发起了一笔转账',
+        voice: '发送了一条语音',
+        favorite: '发送了收藏内容',
+        card: '发送了个人名片',
+        music: '分享了一首音乐'
+    };
+    const content = actionText[action] || '发送了一条消息';
+    const msg = { role: 'user', type: action, content: content, timestamp: Date.now() };
+    await addMessage(currentChatContact.id, msg);
+    await updateRecentChats(currentChatContact.id, '[' + content + ']', msg.timestamp);
+    closeChatExtraPanel();
+    await renderChatMessages();
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
 let waitingForReply = false; 
 
 function handleSendButton() {
@@ -1219,6 +1310,7 @@ async function sendUserMessage() {
     const input = document.getElementById('chat-input-box');
     const content = input.value.trim();
     if(!content || !currentChatContact) return;
+    closeChatExtraPanel();
 
     // [DB-READ] 读取当前消息历史
     let history = await getChatHistory(currentChatContact.id);
@@ -1447,7 +1539,6 @@ ${contactChar.detail || '（无特殊设定）'}
         const wait = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
         const CHAR_MESSAGE_INTERVAL = 1800;
         let previewText = parsedReplyMessages[0] ? String(parsedReplyMessages[0].content).substring(0, 80) : aiReply.substring(0, 50);
-        let unreadAdded = false;
 
         // [DB-WRITE] 逐条写入AI回复：第一条无延迟，后续每条间隔1.8秒
         for (let i = 0; i < parsedReplyMessages.length; i++) {
@@ -1458,9 +1549,9 @@ ${contactChar.detail || '（无特殊设定）'}
             await updateRecentChats(contactId, item.content, msgTime);
 
             const outsideCurrentChat = document.hidden || !currentChatContact || String(currentChatContact.id) !== String(contactId) || getActivePageId() !== 'page-chat';
-            if (outsideCurrentChat && !unreadAdded) {
+            if (outsideCurrentChat) {
+                // [UNREAD-BY-MESSAGE] 未读数按消息条数累计，不按一次回复轮数累计
                 incrementUnread(contactId);
-                unreadAdded = true;
             }
             notifyReplyMessage({ id: contactId, char: contactChar }, item.content, msgTime, 0);
 
@@ -1555,7 +1646,7 @@ function renderChatItem(recent, contacts, isPinned) {
     const timeStr = new Date(recent.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     const contactIndex = contacts.findIndex(c => c.id === recent.id);
     const unreadCount = getUnreadCount(contact.id);
-    const unreadBadge = unreadCount > 0 ? `<div style="position:absolute; top:0; right:0; background:#FE3D2F; color:#fff; border-radius:50%; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; padding:0 5px;">${unreadCount}</div>` : '';
+    const unreadBadge = unreadCount > 0 ? `<div class="chat-avatar-unread-badge">${unreadCount > 99 ? '99+' : unreadCount}</div>` : '';
     const pinnedBg = isPinned ? 'background-color: #f7f7f7;' : '';
 
     return `

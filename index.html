@@ -296,10 +296,6 @@
                 </div>
                 <div class="chat-nav-center">
                     <div class="chat-nav-name" id="chat-title">用户名</div>
-                    <div class="chat-nav-status">
-                        <div class="status-dot"></div>
-                        <span>在线</span>
-                    </div>
                 </div>
                 <div class="nav-right-btn">
                     <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
@@ -309,16 +305,37 @@
                 
             </div>
             <div class="chat-footer">
-                <div class="chat-btn-circle">
+                <button class="chat-btn-circle chat-plus-toggle" onclick="toggleChatExtraPanel()" aria-label="展开更多功能">
                     <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                </div>
+                </button>
                 <div class="chat-input-wrapper">
-                    <input type="text" class="chat-input" id="chat-input-box" onkeydown="if(event.keyCode===13) handleSendButton()">
+                    <input type="text" class="chat-input" id="chat-input-box" onfocus="closeChatExtraPanel()" onkeydown="if(event.keyCode===13) handleSendButton()">
                     <svg class="chat-voice-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                 </div>
                 <svg class="chat-emoji-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-                                <button class="chat-send-btn" id="chat-send-btn" onclick="handleSendButton()" ondblclick="handleDoubleSend(event)">发送</button>
+                <button class="chat-send-btn" id="chat-send-btn" onclick="handleSendButton()" ondblclick="handleDoubleSend(event)">发送</button>
             </div>
+            <div class="chat-extra-panel" id="chat-extra-panel">
+                <div class="chat-extra-grid">
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('camera')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M9 4l-1.5 2H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-2.5L15 4H9zm3 14a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span><span>相机</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('image')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 11.5l2.5 3.01L14.5 10l4.5 6H5l3.5-4.5z"/></svg></span><span>图片</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('video')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V6c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-4.5l4 4v-11l-4 4z"/></svg></span><span>视频</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('location')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg></span><span>位置</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('redpacket')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H5c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1zm4 3v4h6V7H9zm3 9.5l3-3h-2v-2h-2v2H9l3 3z"/></svg></span><span>红包</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('gift')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M20 7h-2.18c.11-.31.18-.65.18-1a3 3 0 0 0-5.64-1.44L12 5.04l-.36-.48A3 3 0 0 0 6 6c0 .35.07.69.18 1H4v5h1v8h14v-8h1V7zM9 7a1 1 0 1 1 0-2c.55 0 1 .45 1 1v1H9zm6 0h-1V6a1 1 0 1 1 1 1zm-4 11H7v-6h4v6zm6 0h-4v-6h4v6z"/></svg></span><span>礼物</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('transfer')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M7 7h11l-4-4 1.4-1.4L21.8 8l-6.4 6.4L14 13l4-4H7V7zm10 10H6l4 4-1.4 1.4L2.2 16l6.4-6.4L10 11l-4 4h11v2z"/></svg></span><span>转账</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('voice')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5a3 3 0 0 0-6 0v6c0 1.66 1.34 3 3 3zm5-3a5 5 0 0 1-10 0H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></span><span>语音</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('favorite')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span><span>收藏</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('card')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M3 5h18v14H3V5zm3 3v8h6V8H6zm8 1v2h5V9h-5zm0 4v2h5v-2h-5z"/></svg></span><span>个人名片</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('file')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span>文件</span></button>
+                    <button class="chat-extra-item" onclick="handleChatExtraAction('music')"><span class="chat-extra-icon"><svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></span><span>音乐</span></button>
+                </div>
+                <div class="chat-extra-dots"><span></span><span class="active"></span></div>
+            </div>
+            <input id="chat-camera-input" type="file" accept="image/*" capture="environment" hidden onchange="handleChatPickedFile(event, 'image', '相机')">
+            <input id="chat-image-input" type="file" accept="image/*" hidden onchange="handleChatPickedFile(event, 'image', '图片')">
+            <input id="chat-video-input" type="file" accept="video/*" hidden onchange="handleChatPickedFile(event, 'video', '视频')">
+            <input id="chat-file-input" type="file" hidden onchange="handleChatPickedFile(event, 'file', '文件')">
         </div>
 
 
