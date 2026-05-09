@@ -1,3 +1,75 @@
+
+// ============================================================
+// [DEXIE-FALLBACK] CDN 失败或离线打开时，使用本地 localStorage 兼容层
+// 解决脚本因 Dexie 未加载而整体中断，导致加号、语音、音乐、支付点击无反应
+// ============================================================
+(function(){
+    if (window.Dexie) return;
+    function readStore(dbName, tableName){
+        try { return JSON.parse(localStorage.getItem('__dexie_fallback__' + dbName + '__' + tableName) || '[]'); }
+        catch(e){ return []; }
+    }
+    function writeStore(dbName, tableName, rows){
+        localStorage.setItem('__dexie_fallback__' + dbName + '__' + tableName, JSON.stringify(rows || []));
+    }
+    function primaryKeyFor(tableName){ return tableName === 'kv' ? 'key' : 'id'; }
+    function nextId(rows){
+        return rows.reduce(function(max,row){ return Math.max(max, Number(row && row.id) || 0); }, 0) + 1;
+    }
+    function FallbackTable(dbName, tableName){ this.dbName = dbName; this.tableName = tableName; }
+    FallbackTable.prototype._rows = function(){ return readStore(this.dbName, this.tableName); };
+    FallbackTable.prototype._save = function(rows){ writeStore(this.dbName, this.tableName, rows); };
+    FallbackTable.prototype.toArray = async function(){ return this._rows(); };
+    FallbackTable.prototype.clear = async function(){ this._save([]); };
+    FallbackTable.prototype.add = async function(obj){
+        const rows = this._rows();
+        const row = Object.assign({}, obj || {});
+        if (this.tableName !== 'kv' && (row.id === undefined || row.id === null)) row.id = nextId(rows);
+        rows.push(row);
+        this._save(rows);
+        return row.id;
+    };
+    FallbackTable.prototype.put = async function(obj){
+        const rows = this._rows();
+        const row = Object.assign({}, obj || {});
+        const pk = primaryKeyFor(this.tableName);
+        if (this.tableName !== 'kv' && (row[pk] === undefined || row[pk] === null)) row[pk] = nextId(rows);
+        const idx = rows.findIndex(function(item){ return String(item && item[pk]) === String(row[pk]); });
+        if (idx >= 0) rows[idx] = row; else rows.push(row);
+        this._save(rows);
+        return row[pk];
+    };
+    FallbackTable.prototype.get = async function(id){
+        const pk = primaryKeyFor(this.tableName);
+        return this._rows().find(function(item){ return String(item && item[pk]) === String(id); });
+    };
+    FallbackTable.prototype.delete = async function(id){
+        const pk = primaryKeyFor(this.tableName);
+        this._save(this._rows().filter(function(item){ return String(item && item[pk]) !== String(id); }));
+    };
+    FallbackTable.prototype.where = function(field){
+        const self = this;
+        return {
+            equals: function(value){
+                const matcher = function(row){ return String(row && row[field]) === String(value); };
+                return {
+                    sortBy: async function(sortField){
+                        return self._rows().filter(matcher).sort(function(a,b){ return (Number(a && a[sortField]) || 0) - (Number(b && b[sortField]) || 0); });
+                    },
+                    delete: async function(){ self._save(self._rows().filter(function(row){ return !matcher(row); })); }
+                };
+            }
+        };
+    };
+    window.Dexie = function(dbName){
+        this.__dbName = dbName;
+        this.version = function(){
+            const self = this;
+            return { stores: function(schema){ Object.keys(schema || {}).forEach(function(name){ self[name] = new FallbackTable(dbName, name); }); } };
+        };
+    };
+})();
+
 // ============================================================
         // [DB-INIT] Dexie.js 数据库初始化
         // 使用 IndexedDB 替代 localStorage，支持存储大图（Base64）
@@ -3579,11 +3651,11 @@ async function refreshForumPosts(){
 
 
 // ========== [UPDATE-LOG] 每个版本显示一次更新内容 ==========
-const APP_VERSION = '0.0.05';
+const APP_VERSION = '0.0.06';
 const APP_UPDATE_LOG = [
-    '拓展功能面板的语音改为真实录制语音，不再填写录制内容。',
-    '录制弹窗支持开始录音、停止、播放并转文本，录音完成后才能发送。',
-    '语音消息点击后播放录音并展开转文本结果，未识别到文字时显示提示。',
+    '修复 Dexie CDN 加载失败或离线打开时脚本整体中断的问题。',
+    '加号拓展功能面板、语音录制、音乐页、支付页点击现在会正常响应。',
+    '保留 IndexedDB 方案；仅在 Dexie 不可用时启用本地兼容层，避免功能全部失效。',
     '同步更新版本弹窗内容，确保本版本首次打开会显示更新说明。'
 ];
 function initUpdateLog(){
