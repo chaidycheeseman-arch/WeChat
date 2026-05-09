@@ -2024,3 +2024,23 @@
 
 .voice-bubble { cursor: pointer; }
 .voice-main { min-height: 24px; }
+
+/* ========== [VOICE-RECORD] 录制语音弹窗内部控件 ========== */
+.voice-record-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.voice-record-status { font-size: 13px; color: #666; text-align: center; }
+.voice-record-time { font-size: 28px; font-weight: 800; letter-spacing: 1px; text-align: center; color: #111; }
+.voice-record-actions { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
+.voice-record-actions .modal-btn { min-width: 0; padding-left: 8px; padding-right: 8px; }
+.voice-record-actions .modal-btn:disabled,
+#voice-record-send:disabled { opacity: .42; pointer-events: none; }
+.voice-record-transcript {
+    min-height: 72px;
+    padding: 10px 11px;
+    border-radius: 2px;
+    background: rgba(0,0,0,.06);
+    color: #333;
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}

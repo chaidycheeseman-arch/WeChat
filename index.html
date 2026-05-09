@@ -297,10 +297,19 @@
         <div id="voice-record-modal" class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-title">录制语音</div>
-                <textarea id="voice-record-input" class="form-textarea music-lrc-textarea" placeholder="输入录制内容"></textarea>
+                <div class="voice-record-panel">
+                    <div id="voice-record-status" class="voice-record-status">点击开始录音</div>
+                    <div id="voice-record-time" class="voice-record-time">00:00</div>
+                    <div class="voice-record-actions">
+                        <button id="voice-record-start" class="modal-btn confirm" onclick="startVoiceRecording()">开始录音</button>
+                        <button id="voice-record-stop" class="modal-btn" onclick="stopVoiceRecording()" disabled>停止</button>
+                        <button id="voice-record-play" class="modal-btn" onclick="playRecordedVoicePreview()" disabled>播放并转文本</button>
+                    </div>
+                    <div id="voice-record-transcript" class="voice-record-transcript">转文本结果会显示在这里</div>
+                </div>
                 <div class="modal-actions">
                     <button class="modal-btn" onclick="closeVoiceRecordModal()">取消</button>
-                    <button class="modal-btn confirm" onclick="sendVoiceRecordMessage()">发送</button>
+                    <button id="voice-record-send" class="modal-btn confirm" onclick="sendVoiceRecordMessage()" disabled>发送</button>
                 </div>
             </div>
         </div>

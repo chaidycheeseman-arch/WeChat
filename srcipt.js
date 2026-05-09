@@ -951,11 +951,12 @@
                 } else if (msg.type === 'video') {
                     bubbleContent += `<video class="message-media-video" controls src="${escapeHtml(msg.content)}"></video>`;
                 } else if (msg.type === 'file') {
-                    bubbleContent += `<div class="message-special-card"><div class="message-special-title">${escapeHtml(msg.fileName || '文件')}</div><div class="message-special-sub">${escapeHtml(msg.content || '已发送文件')}</div></div>`;
-                } else if (msg.type === 'voice') {
-                    const voiceText = String(msg.voiceText || msg.content || '语音');
-                    const duration = Math.max(1, Math.ceil(voiceText.replace(/\s/g, '').length / 3));
-                    bubbleContent += `<div class="voice-bubble" onclick="toggleVoiceTranscript(this)"><div class="voice-main"><svg class="voice-wifi-icon" viewBox="0 0 24 24"><path d="M4 9c4.2-4 11.8-4 16 0l-1.9 1.9c-3.1-2.9-9.1-2.9-12.2 0L4 9zm3.4 3.4c2.5-2.2 6.7-2.2 9.2 0l-1.9 1.9c-1.45-1.25-3.95-1.25-5.4 0l-1.9-1.9zm3.3 3.35c.72-.58 1.88-.58 2.6 0L12 17.05l-1.3-1.3z"/></svg><span class="voice-desc">语音 ${duration}"</span></div><div class="voice-transcript">${escapeHtml(voiceText)}</div></div>`;
+                    bubbleContent += `<div class="message-special-card"><div class="message-special-title">${escapeHtml(msg.fileName || '文件')}</div><div class="message-special-sub">${escapeHtml(msg.content || '已发送文件')}</div></div>`;                } else if (msg.type === 'voice') {
+                    const voiceText = String(msg.voiceText || '').trim();
+                    const duration = Number(msg.voiceDuration || Math.max(1, Math.ceil(String(msg.content || '').replace(/\s/g, '').length / 3)));
+                    const audioAttr = msg.voiceAudio ? ` data-audio="${escapeHtml(msg.voiceAudio)}"` : '';
+                    const transcriptText = voiceText || '点击播放后转文本，未识别到内容时会显示提示。';
+                    bubbleContent += `<div class="voice-bubble" onclick="playVoiceMessage(this)"${audioAttr} data-transcript="${escapeHtml(voiceText)}"><div class="voice-main"><svg class="voice-wifi-icon" viewBox="0 0 24 24"><path d="M4 9c4.2-4 11.8-4 16 0l-1.9 1.9c-3.1-2.9-9.1-2.9-12.2 0L4 9zm3.4 3.4c2.5-2.2 6.7-2.2 9.2 0l-1.9 1.9c-1.45-1.25-3.95-1.25-5.4 0l-1.9-1.9zm3.3 3.35c.72-.58 1.88-.58 2.6 0L12 17.05l-1.3-1.3z"/></svg><span class="voice-desc">语音 ${duration}"</span></div><div class="voice-transcript">${escapeHtml(transcriptText)}</div></div>`;
                 } else if (msg.type === 'music') {
                     const musicTitle = escapeHtml(msg.musicTitle || '音乐');
                     const musicArtist = escapeHtml(msg.musicArtist || msg.content || '未知歌手');
@@ -1332,29 +1333,190 @@ async function sendChatExtraMessage(action) {
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
+let voiceRecorder = null;
+let voiceRecorderStream = null;
+let voiceRecorderChunks = [];
+let voiceRecordedAudio = '';
+let voiceRecordedDuration = 0;
+let voiceRecordStartedAt = 0;
+let voiceRecordTimer = null;
+let voiceRecognition = null;
+let voiceRecognitionText = '';
+let voicePreviewAudio = null;
+
+function formatVoiceRecordTime(seconds) {
+    const sec = Math.max(0, Math.floor(seconds || 0));
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return m + ':' + s;
+}
+function setVoiceRecordStatus(text) {
+    const el = document.getElementById('voice-record-status');
+    if (el) el.textContent = text;
+}
+function setVoiceRecordTranscript(text) {
+    const el = document.getElementById('voice-record-transcript');
+    if (el) el.textContent = text || '转文本结果会显示在这里';
+}
+function setVoiceRecordButtons(recording) {
+    const start = document.getElementById('voice-record-start');
+    const stop = document.getElementById('voice-record-stop');
+    const play = document.getElementById('voice-record-play');
+    const send = document.getElementById('voice-record-send');
+    if (start) start.disabled = !!recording;
+    if (stop) stop.disabled = !recording;
+    if (play) play.disabled = !!recording || !voiceRecordedAudio;
+    if (send) send.disabled = !!recording || !voiceRecordedAudio;
+}
+function resetVoiceRecordState() {
+    if (voiceRecordTimer) clearInterval(voiceRecordTimer);
+    voiceRecordTimer = null;
+    voiceRecorder = null;
+    voiceRecorderChunks = [];
+    voiceRecordedAudio = '';
+    voiceRecordedDuration = 0;
+    voiceRecognitionText = '';
+    if (voiceRecorderStream) {
+        voiceRecorderStream.getTracks().forEach(track => track.stop());
+        voiceRecorderStream = null;
+    }
+    if (voiceRecognition) {
+        try { voiceRecognition.stop(); } catch (e) {}
+        voiceRecognition = null;
+    }
+    const time = document.getElementById('voice-record-time');
+    if (time) time.textContent = '00:00';
+    setVoiceRecordStatus('点击开始录音');
+    setVoiceRecordTranscript('转文本结果会显示在这里');
+    setVoiceRecordButtons(false);
+}
 function toggleVoiceTranscript(el) {
     if (el) el.classList.toggle('expanded');
 }
-
 function openVoiceRecordModal() {
     const modal = document.getElementById('voice-record-modal');
-    const input = document.getElementById('voice-record-input');
     closeChatExtraPanel();
-    if (input) input.value = '';
+    resetVoiceRecordState();
     if (modal) modal.style.display = 'flex';
-    setTimeout(function(){ if (input) input.focus(); }, 30);
 }
 function closeVoiceRecordModal() {
+    if (voiceRecorder && voiceRecorder.state === 'recording') {
+        try { voiceRecorder.stop(); } catch (e) {}
+    }
+    resetVoiceRecordState();
     const modal = document.getElementById('voice-record-modal');
     if (modal) modal.style.display = 'none';
 }
+function startVoiceSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        setVoiceRecordTranscript('当前浏览器不支持实时语音转文字，仍可录音发送。');
+        return;
+    }
+    voiceRecognition = new SpeechRecognition();
+    voiceRecognition.lang = 'zh-CN';
+    voiceRecognition.continuous = true;
+    voiceRecognition.interimResults = true;
+    voiceRecognition.onresult = function(event) {
+        let finalText = '';
+        let interimText = '';
+        for (let i = 0; i < event.results.length; i++) {
+            const txt = event.results[i][0] && event.results[i][0].transcript ? event.results[i][0].transcript : '';
+            if (event.results[i].isFinal) finalText += txt;
+            else interimText += txt;
+        }
+        voiceRecognitionText = (finalText || interimText || '').trim();
+        setVoiceRecordTranscript(voiceRecognitionText || '正在识别语音…');
+    };
+    voiceRecognition.onerror = function() {
+        if (!voiceRecognitionText) setVoiceRecordTranscript('语音转文字未识别到内容，播放时会继续显示提示。');
+    };
+    try { voiceRecognition.start(); } catch (e) {}
+}
+async function startVoiceRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+        alert('当前浏览器不支持录音，请使用支持麦克风录制的浏览器。');
+        return;
+    }
+    try {
+        resetVoiceRecordState();
+        voiceRecorderStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        voiceRecorderChunks = [];
+        voiceRecorder = new MediaRecorder(voiceRecorderStream);
+        voiceRecordStartedAt = Date.now();
+        setVoiceRecordStatus('正在录音…');
+        setVoiceRecordTranscript('正在识别语音…');
+        setVoiceRecordButtons(true);
+        const time = document.getElementById('voice-record-time');
+        voiceRecordTimer = setInterval(function(){
+            const sec = Math.floor((Date.now() - voiceRecordStartedAt) / 1000);
+            if (time) time.textContent = formatVoiceRecordTime(sec);
+        }, 250);
+        voiceRecorder.ondataavailable = function(event) {
+            if (event.data && event.data.size) voiceRecorderChunks.push(event.data);
+        };
+        voiceRecorder.onstop = function() {
+            if (voiceRecordTimer) clearInterval(voiceRecordTimer);
+            voiceRecordTimer = null;
+            voiceRecordedDuration = Math.max(1, Math.ceil((Date.now() - voiceRecordStartedAt) / 1000));
+            const blob = new Blob(voiceRecorderChunks, { type: voiceRecorder.mimeType || 'audio/webm' });
+            const reader = new FileReader();
+            reader.onload = function() {
+                voiceRecordedAudio = String(reader.result || '');
+                setVoiceRecordStatus('录音完成，点击播放并转文本可回放。');
+                if (!voiceRecognitionText) setVoiceRecordTranscript('未识别到文字，可直接发送语音。');
+                setVoiceRecordButtons(false);
+            };
+            reader.readAsDataURL(blob);
+            if (voiceRecorderStream) {
+                voiceRecorderStream.getTracks().forEach(track => track.stop());
+                voiceRecorderStream = null;
+            }
+            if (voiceRecognition) {
+                try { voiceRecognition.stop(); } catch (e) {}
+                voiceRecognition = null;
+            }
+        };
+        voiceRecorder.start();
+        startVoiceSpeechRecognition();
+    } catch (err) {
+        resetVoiceRecordState();
+        alert('无法开始录音，请检查麦克风权限。');
+    }
+}
+function stopVoiceRecording() {
+    if (voiceRecorder && voiceRecorder.state === 'recording') {
+        voiceRecorder.stop();
+        setVoiceRecordStatus('正在保存录音…');
+    }
+}
+function playRecordedVoicePreview() {
+    if (!voiceRecordedAudio) return;
+    if (voicePreviewAudio) {
+        try { voicePreviewAudio.pause(); } catch (e) {}
+    }
+    voicePreviewAudio = new Audio(voiceRecordedAudio);
+    voicePreviewAudio.play().catch(function(){});
+    setVoiceRecordTranscript(voiceRecognitionText || '未识别到文字，可直接发送语音。');
+}
+function playVoiceMessage(el) {
+    if (!el) return;
+    const src = el.getAttribute('data-audio') || '';
+    const transcript = (el.getAttribute('data-transcript') || '').trim();
+    const box = el.querySelector('.voice-transcript');
+    if (src) {
+        const audio = new Audio(src);
+        audio.play().catch(function(){});
+    }
+    if (box) box.textContent = transcript || '未识别到文字。';
+    el.classList.add('expanded');
+}
 async function sendVoiceRecordMessage() {
     if (!currentChatContact) return;
-    const input = document.getElementById('voice-record-input');
-    const text = (input ? input.value : '').trim();
-    if (!text) { alert('请输入录制内容'); return; }
-    const duration = Math.max(1, Math.ceil(text.replace(/\s/g, '').length / 3));
-    const msg = { role: 'user', type: 'voice', content: '语音 ' + duration + '"', voiceText: text, timestamp: Date.now() };
+    if (!voiceRecordedAudio) { alert('请先录制语音'); return; }
+    const text = (voiceRecognitionText || '').trim();
+    const duration = Math.max(1, voiceRecordedDuration || Math.ceil((text || '语音').replace(/\s/g, '').length / 3));
+    const msg = { role: 'user', type: 'voice', content: '语音 ' + duration + '"', voiceText: text, voiceAudio: voiceRecordedAudio, voiceDuration: duration, timestamp: Date.now() };
     await addMessage(currentChatContact.id, msg);
     await updateRecentChats(currentChatContact.id, '[语音] ' + duration + '"', msg.timestamp);
     closeVoiceRecordModal();
@@ -1365,8 +1527,12 @@ async function sendVoiceRecordMessage() {
 
 window.openVoiceRecordModal = openVoiceRecordModal;
 window.closeVoiceRecordModal = closeVoiceRecordModal;
+window.startVoiceRecording = startVoiceRecording;
+window.stopVoiceRecording = stopVoiceRecording;
+window.playRecordedVoicePreview = playRecordedVoicePreview;
 window.sendVoiceRecordMessage = sendVoiceRecordMessage;
 window.toggleVoiceTranscript = toggleVoiceTranscript;
+window.playVoiceMessage = playVoiceMessage;
 
 let musicLibrary = [];
 let musicEditingId = null;
@@ -3413,11 +3579,11 @@ async function refreshForumPosts(){
 
 
 // ========== [UPDATE-LOG] 每个版本显示一次更新内容 ==========
-const APP_VERSION = '0.0.04';
+const APP_VERSION = '0.0.05';
 const APP_UPDATE_LOG = [
-    '修正聊天页语音入口：恢复并使用输入栏内部原有麦克风语音按钮，不再依赖新增外置按钮。',
-    '点击输入栏内麦克风可直接弹出录制内容弹窗，发送后生成语音气泡。',
-    '语音气泡按 3 字/秒自动计算时长，点击气泡可展开 2px 圆角方形内容框查看录制文本。',
+    '拓展功能面板的语音改为真实录制语音，不再填写录制内容。',
+    '录制弹窗支持开始录音、停止、播放并转文本，录音完成后才能发送。',
+    '语音消息点击后播放录音并展开转文本结果，未识别到文字时显示提示。',
     '同步更新版本弹窗内容，确保本版本首次打开会显示更新说明。'
 ];
 function initUpdateLog(){
