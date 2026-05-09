@@ -2074,3 +2074,97 @@
 .data-action-btn.primary{background:#111;color:#fff;}.data-action-btn.danger{background:#fff1f1;color:#d11;border:1px solid #ffd5d5;}
 .data-status{min-height:18px;margin-top:12px;font-size:12px;color:#777;line-height:1.5;word-break:break-all;}
 @media (max-width:420px){.payment-balance-section{padding-top:62px}.payment-coin-icon{width:56px;height:56px;font-size:36px;margin-bottom:38px}.payment-balance-value{font-size:46px}.payment-actions-section{padding:0 44px}.payment-footer{padding-top:48px}}
+
+/* ========== [FONT-PAGE] 字体页面：预设栏、预览面板、上传区 ========== */
+body.custom-font-loaded,
+body.custom-font-loaded * {
+    font-family: var(--app-font-family), -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+}
+.font-content-area {
+    padding: 16px;
+    background: #fafafa;
+}
+.font-preset-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.font-preset-select {
+    flex: 1;
+    height: 38px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0 12px;
+    font-size: 14px;
+    color: var(--text-color);
+    outline: none;
+}
+.font-icon-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.font-icon-btn svg {
+    width: 19px;
+    height: 19px;
+    fill: #111;
+}
+.font-preview-panel {
+    min-height: 132px;
+    border-radius: 22px;
+    background: #fff;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.06);
+    font-size: 20px;
+    line-height: 1.35;
+    color: #111;
+    margin-bottom: 16px;
+    word-break: break-word;
+}
+.font-preview-panel div:first-child {
+    text-align: left;
+}
+.font-preview-panel div:last-child {
+    text-align: right;
+    font-size: 18px;
+}
+.font-form-card {
+    border-radius: 22px;
+    background: #fff;
+    padding: 16px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.045);
+}
+.font-file-btn {
+    width: 100%;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: #111;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+}
+.font-file-name {
+    margin-top: 8px;
+    color: var(--text-gray);
+    font-size: 12px;
+    line-height: 1.4;
+    word-break: break-all;
+}
+.font-note {
+    color: var(--text-gray);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 4px;
+}

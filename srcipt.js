@@ -3918,3 +3918,218 @@ window.addEventListener('load', function() {
         setTimeout(function(){ openChatByContactId(contactId); }, 300);
     }
 });
+
+// ========== [FONT-PAGE] 字体预设、预览、本地/URL 字体应用 ==========
+let fontPreviewSource = '';
+let fontPreviewType = '';
+let fontPreviewFileName = '';
+let activeFontStyleEl = null;
+let previewFontStyleEl = null;
+
+function ensureFontStyleEl(id) {
+    let el = document.getElementById(id);
+    if (!el) {
+        el = document.createElement('style');
+        el.id = id;
+        document.head.appendChild(el);
+    }
+    return el;
+}
+
+function buildFontFaceCss(family, source) {
+    return "@font-face{font-family:'" + family + "';src:url('" + String(source).replace(/'/g, "\\'") + "');font-display:swap;}";
+}
+
+function applyPreviewFont(source) {
+    const panel = document.getElementById('font-preview-panel');
+    if (!panel) return;
+    if (!source) {
+        if (previewFontStyleEl) previewFontStyleEl.textContent = '';
+        panel.style.fontFamily = '';
+        return;
+    }
+    previewFontStyleEl = ensureFontStyleEl('font-preview-style');
+    previewFontStyleEl.textContent = buildFontFaceCss('FontPreviewFamily', source);
+    panel.style.fontFamily = "'FontPreviewFamily', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif";
+}
+
+function applyGlobalFont(source) {
+    if (!source) {
+        if (activeFontStyleEl) activeFontStyleEl.textContent = '';
+        document.body.classList.remove('custom-font-loaded');
+        document.documentElement.style.removeProperty('--app-font-family');
+        return;
+    }
+    activeFontStyleEl = ensureFontStyleEl('font-active-style');
+    activeFontStyleEl.textContent = buildFontFaceCss('AppCustomFont', source);
+    document.documentElement.style.setProperty('--app-font-family', 'AppCustomFont');
+    document.body.classList.add('custom-font-loaded');
+}
+
+async function getFontPresets() {
+    const presets = await dbGet('font_presets', []);
+    return Array.isArray(presets) ? presets : [];
+}
+
+async function setFontPresets(presets) {
+    await dbSet('font_presets', presets);
+}
+
+async function renderFontPresets(selectedId) {
+    const select = document.getElementById('font-preset-select');
+    if (!select) return;
+    const presets = await getFontPresets();
+    select.innerHTML = '<option value="">默认字体</option>' + presets.map(item => '<option value="' + item.id + '">' + escapeHtml(item.name || '未命名字体') + '</option>').join('');
+    if (selectedId !== undefined) select.value = selectedId || '';
+}
+
+async function openFontPage() {
+    const page = document.getElementById('page-font');
+    if (!page) return;
+    page.classList.add('active');
+    const dock = document.querySelector('.dock');
+    if (dock) dock.style.display = 'none';
+    await renderFontPresets();
+    await loadCurrentFontIntoEditor();
+}
+
+function closeFontPage() {
+    const page = document.getElementById('page-font');
+    if (page) page.classList.remove('active');
+    const dock = document.querySelector('.dock');
+    if (dock) dock.style.display = 'flex';
+}
+
+async function loadCurrentFontIntoEditor() {
+    const current = await dbGet('font_active', null);
+    document.getElementById('font-name-input').value = current && current.name ? current.name : '';
+    document.getElementById('font-url-input').value = current && current.type === 'url' ? current.source : '';
+    document.getElementById('font-file-name').textContent = current && current.type === 'file' ? (current.fileName || '[本地文件]') : '未选择文件';
+    fontPreviewSource = current && current.source ? current.source : '';
+    fontPreviewType = current && current.type ? current.type : '';
+    fontPreviewFileName = current && current.fileName ? current.fileName : '';
+    applyPreviewFont(fontPreviewSource);
+}
+
+async function loadFontPresetPreview() {
+    const select = document.getElementById('font-preset-select');
+    const id = select ? select.value : '';
+    if (!id) {
+        document.getElementById('font-name-input').value = '';
+        document.getElementById('font-url-input').value = '';
+        document.getElementById('font-file-name').textContent = '未选择文件';
+        fontPreviewSource = '';
+        fontPreviewType = '';
+        fontPreviewFileName = '';
+        applyPreviewFont('');
+        return;
+    }
+    const presets = await getFontPresets();
+    const preset = presets.find(item => String(item.id) === String(id));
+    if (!preset) return;
+    document.getElementById('font-name-input').value = preset.name || '';
+    document.getElementById('font-url-input').value = preset.type === 'url' ? preset.source : '';
+    document.getElementById('font-file-name').textContent = preset.type === 'file' ? (preset.fileName || '[本地文件]') : '未选择文件';
+    fontPreviewSource = preset.source || '';
+    fontPreviewType = preset.type || '';
+    fontPreviewFileName = preset.fileName || '';
+    applyPreviewFont(fontPreviewSource);
+}
+
+function previewFontFromUrl() {
+    const input = document.getElementById('font-url-input');
+    const value = input ? input.value.trim() : '';
+    if (!value) return;
+    fontPreviewSource = value;
+    fontPreviewType = 'url';
+    fontPreviewFileName = '';
+    const fileName = document.getElementById('font-file-name');
+    if (fileName) fileName.textContent = '未选择文件';
+    applyPreviewFont(value);
+}
+
+function handleFontFileSelect(event) {
+    const file = event && event.target && event.target.files ? event.target.files[0] : null;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        fontPreviewSource = e.target.result;
+        fontPreviewType = 'file';
+        fontPreviewFileName = file.name;
+        const urlInput = document.getElementById('font-url-input');
+        if (urlInput) urlInput.value = '[本地文件]';
+        const fileName = document.getElementById('font-file-name');
+        if (fileName) fileName.textContent = file.name;
+        applyPreviewFont(fontPreviewSource);
+    };
+    reader.readAsDataURL(file);
+}
+
+async function saveFontPresetAndApply() {
+    const nameInput = document.getElementById('font-name-input');
+    const select = document.getElementById('font-preset-select');
+    const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : '自定义字体';
+    let source = fontPreviewSource;
+    let type = fontPreviewType;
+    if (!source) {
+        const url = document.getElementById('font-url-input').value.trim();
+        if (url && url !== '[本地文件]') {
+            source = url;
+            type = 'url';
+        }
+    }
+    if (!source) {
+        await dbSet('font_active', null);
+        applyGlobalFont('');
+        alert('已恢复默认字体');
+        return;
+    }
+    const presets = await getFontPresets();
+    const selectedId = select ? select.value : '';
+    const item = {
+        id: selectedId || ('font_' + Date.now()),
+        name,
+        source,
+        type: type || 'url',
+        fileName: fontPreviewFileName || '',
+        updatedAt: Date.now()
+    };
+    const index = presets.findIndex(p => String(p.id) === String(item.id));
+    if (index >= 0) presets[index] = item;
+    else presets.push(item);
+    await setFontPresets(presets);
+    await dbSet('font_active', item);
+    applyGlobalFont(source);
+    await renderFontPresets(item.id);
+    alert('字体已保存并全局应用');
+}
+
+async function deleteFontPreset() {
+    const select = document.getElementById('font-preset-select');
+    const id = select ? select.value : '';
+    if (!id) {
+        await dbSet('font_active', null);
+        applyGlobalFont('');
+        await loadFontPresetPreview();
+        alert('已恢复默认字体');
+        return;
+    }
+    if (!confirm('确认删除该字体预设？')) return;
+    const presets = await getFontPresets();
+    const next = presets.filter(item => String(item.id) !== String(id));
+    await setFontPresets(next);
+    const active = await dbGet('font_active', null);
+    if (active && String(active.id) === String(id)) {
+        await dbSet('font_active', null);
+        applyGlobalFont('');
+    }
+    await renderFontPresets('');
+    await loadFontPresetPreview();
+}
+
+async function initSavedFont() {
+    const current = await dbGet('font_active', null);
+    if (current && current.source) applyGlobalFont(current.source);
+}
+
+initSavedFont();
