@@ -19,7 +19,7 @@
         <div class="update-card">
             <div class="update-card-head">
                 <div>更新日志</div>
-                <div id="update-version-badge" class="update-version-badge">v0.0.01</div>
+                <div id="update-version-badge" class="update-version-badge">v0.0.02</div>
             </div>
             <div id="update-content" class="update-content"></div>
             <button class="update-know-btn" onclick="confirmUpdateLog()">知道了<span></span></button>
@@ -46,13 +46,13 @@
             </div>
             <div id="chat-plus-menu" class="chat-plus-menu">
                 <div class="chat-plus-menu-item" onclick="openDirectChatFromPlus()">
-                    <span class="chat-plus-menu-icon">+</span><span>发起聊天</span>
+                    <span class="chat-plus-menu-icon"><svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5H9l-5 4v-14.5z"/></svg></span><span>发起聊天</span>
                 </div>
                 <div class="chat-plus-menu-item" onclick="openGroupChatFromPlus()">
-                    <span class="chat-plus-menu-icon">群</span><span>发起群聊</span>
+                    <span class="chat-plus-menu-icon"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.67 0-6 1.34-6 4v2h12v-2c0-2.66-3.33-4-6-4zm8 0c-.31 0-.66.02-1.03.07.62.74 1.03 1.69 1.03 2.93v3h6v-2c0-2.66-3.33-4-6-4z"/></svg></span><span>发起群聊</span>
                 </div>
                 <div class="chat-plus-menu-item" onclick="openGroupManageFromPlus()">
-                    <span class="chat-plus-menu-icon">管</span><span>管理群聊</span>
+                    <span class="chat-plus-menu-icon"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.37-.31-.6-.22l-2.49 1a7.3 7.3 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.37.31.6.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.24 1.18-.56 1.69-.98l2.49 1c.23.08.48 0 .6-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"/></svg></span><span>管理群聊</span>
                 </div>
             </div>
             <div class="content-area" id="chat-list-container"></div>
@@ -116,7 +116,7 @@
                     </div>
                     <div class="list-text-wrap">外卖</div>
                 </div>
-                <div class="list-item">
+                <div class="list-item" onclick="openMusicPage()">
                     <div class="list-icon-wrap">
                         <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
                     </div>
@@ -252,11 +252,52 @@
             </div>
         </div>
 
+
+        <div id="page-music" class="page music-page">
+            <div class="nav-bar music-nav">
+                <div class="nav-left-btn" onclick="closeMusicPage()">
+                    <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                </div>
+                <div class="nav-title">音乐</div>
+                <div class="music-nav-actions">
+                    <button class="music-icon-btn" onclick="openMusicAddModal()" aria-label="添加歌曲">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                    <button class="music-text-btn" onclick="toggleMusicMultiSelect()">多选</button>
+                </div>
+            </div>
+            <div class="music-content" id="music-list"></div>
+            <audio id="music-player" controls style="display:none;"></audio>
+        </div>
+
+        <div id="music-add-modal" class="modal-overlay">
+            <div class="modal-content music-modal-content">
+                <div class="modal-title" id="music-modal-title">添加歌曲</div>
+                <input id="music-title-input" class="modal-input music-input" placeholder="歌名">
+                <input id="music-artist-input" class="modal-input music-input" placeholder="歌手">
+                <div class="music-file-row">
+                    <input id="music-url-input" class="modal-input music-input" placeholder="音源URL">
+                    <button class="modal-btn-secondary music-file-btn" onclick="document.getElementById('music-local-file-input').click()">本地文件</button>
+                </div>
+                <input id="music-local-file-input" type="file" accept="audio/*" style="display:none" onchange="handleMusicLocalFile(event)">
+                <input id="music-cover-input" class="modal-input music-input" placeholder="歌曲封面URL">
+                <div class="music-file-row">
+                    <button class="modal-btn-secondary music-file-btn lrc" onclick="document.getElementById('music-lrc-file-input').click()">导入LRC</button>
+                    <span class="music-lrc-tip">或在下方粘贴滚动歌词</span>
+                </div>
+                <input id="music-lrc-file-input" type="file" accept=".lrc,text/plain" style="display:none" onchange="handleMusicLrcFile(event)">
+                <textarea id="music-lrc-input" class="form-textarea music-lrc-textarea" placeholder="[00:00.00] 在这里粘贴歌词"></textarea>
+                <div class="modal-actions">
+                    <button class="modal-btn" onclick="closeMusicAddModal()">取消</button>
+                    <button class="modal-btn confirm" onclick="saveMusicItem()">保存</button>
+                </div>
+            </div>
+        </div>
+
         <div id="voice-record-modal" class="modal-overlay">
-            <div class="modal-content voice-record-modal-content">
-                <div class="modal-title">语音录制</div>
-                <div class="voice-record-tip">输入录制内容，发送后会按 3 字/s 生成语音气泡</div>
-                <textarea id="voice-record-input" class="modal-input voice-record-input" placeholder="输入录制内容…"></textarea>
+            <div class="modal-content">
+                <div class="modal-title">录制语音</div>
+                <textarea id="voice-record-input" class="form-textarea music-lrc-textarea" placeholder="输入录制内容"></textarea>
                 <div class="modal-actions">
                     <button class="modal-btn" onclick="closeVoiceRecordModal()">取消</button>
                     <button class="modal-btn confirm" onclick="sendVoiceRecordMessage()">发送</button>
@@ -322,7 +363,7 @@
                 </button>
                 <div class="chat-input-wrapper">
                     <input type="text" class="chat-input" id="chat-input-box" onfocus="closeChatExtraPanel()" onkeydown="if(event.keyCode===13) handleSendButton()">
-                    <svg class="chat-voice-icon" viewBox="0 0 24 24" onclick="openVoiceRecordModal()" role="button" aria-label="发送语音"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                    <svg class="chat-voice-icon" viewBox="0 0 24 24" onclick="openVoiceRecordModal()" aria-label="语音"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                 </div>
                 <svg class="chat-emoji-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
                 <button class="chat-send-btn" id="chat-send-btn" onclick="handleSendButton()" ondblclick="handleDoubleSend(event)">发送</button>
@@ -390,7 +431,7 @@
                         <svg class="list-arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
                     </div>
                 </div>
-                <div class="settings-version-text" id="settings-version-text">版本 0.0.01</div>
+                <div class="settings-version-text" id="settings-version-text">版本 0.0.02</div>
             </div>
         </div>
 

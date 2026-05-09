@@ -953,12 +953,16 @@
                 } else if (msg.type === 'file') {
                     bubbleContent += `<div class="message-special-card"><div class="message-special-title">${escapeHtml(msg.fileName || '文件')}</div><div class="message-special-sub">${escapeHtml(msg.content || '已发送文件')}</div></div>`;
                 } else if (msg.type === 'voice') {
-                    const voiceText = String(msg.voiceText || msg.content || '');
-                    const voiceSeconds = Math.max(1, Number(msg.duration || Math.ceil(voiceText.length / 3) || 1));
-                    const voiceDesc = msg.voiceDescription || ('语音 ' + voiceSeconds + '"');
-                    bubbleContent += `<div class="voice-message" onclick="toggleVoiceBubble(this)"><div class="voice-main"><svg class="voice-wifi-icon" viewBox="0 0 24 24"><path d="M4 9.2C8.7 4.8 15.3 4.8 20 9.2l-1.9 1.9c-3.6-3.2-8.6-3.2-12.2 0L4 9.2zm3.8 3.8c2.4-2 6-2 8.4 0l-1.9 1.9c-1.3-1-3.3-1-4.6 0L7.8 13zm3.1 3.1c.7-.5 1.5-.5 2.2 0L12 18l-1.1-1.9z"/></svg><span class="voice-desc">${escapeHtml(voiceDesc)}</span></div><div class="voice-expanded">${escapeHtml(voiceText)}</div></div>`;
-                } else if (['location','redpacket','gift','transfer','favorite','card','music'].includes(msg.type)) {
-                    const titles = { location: '位置', redpacket: '红包', gift: '礼物', transfer: '转账', favorite: '收藏', card: '个人名片', music: '音乐' };
+                    const voiceText = String(msg.voiceText || msg.content || '语音');
+                    const duration = Math.max(1, Math.ceil(voiceText.replace(/\s/g, '').length / 3));
+                    bubbleContent += `<div class="voice-bubble" onclick="toggleVoiceTranscript(this)"><div class="voice-main"><svg class="voice-wifi-icon" viewBox="0 0 24 24"><path d="M4 9c4.2-4 11.8-4 16 0l-1.9 1.9c-3.1-2.9-9.1-2.9-12.2 0L4 9zm3.4 3.4c2.5-2.2 6.7-2.2 9.2 0l-1.9 1.9c-1.45-1.25-3.95-1.25-5.4 0l-1.9-1.9zm3.3 3.35c.72-.58 1.88-.58 2.6 0L12 17.05l-1.3-1.3z"/></svg><span class="voice-desc">语音 ${duration}"</span></div><div class="voice-transcript">${escapeHtml(voiceText)}</div></div>`;
+                } else if (msg.type === 'music') {
+                    const musicTitle = escapeHtml(msg.musicTitle || '音乐');
+                    const musicArtist = escapeHtml(msg.musicArtist || msg.content || '未知歌手');
+                    const musicCover = msg.musicCover ? `<img src="${escapeHtml(msg.musicCover)}" alt="">` : `<svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>`;
+                    bubbleContent += `<div class="message-music-card">${musicCover}<div><div class="message-music-title">${musicTitle}</div><div class="message-music-artist">${musicArtist}</div></div></div>`;
+                } else if (['location','redpacket','gift','transfer','favorite','card'].includes(msg.type)) {
+                    const titles = { location: '位置', redpacket: '红包', gift: '礼物', transfer: '转账', favorite: '收藏', card: '个人名片' };
                     bubbleContent += `<div class="message-special-card"><div class="message-special-title">${titles[msg.type] || '消息'}</div><div class="message-special-sub">${escapeHtml(msg.content || '')}</div></div>`;
                 } else {
                     bubbleContent += escapeHtml(msg.content);
@@ -1279,58 +1283,7 @@ function handleChatExtraAction(action) {
         if (input) input.click();
         return;
     }
-    if (action === 'voice') {
-        openVoiceRecordModal();
-        return;
-    }
     sendChatExtraMessage(action);
-}
-
-
-function openVoiceRecordModal() {
-    if (!currentChatContact) return;
-    closeChatExtraPanel();
-    const modal = document.getElementById('voice-record-modal');
-    const input = document.getElementById('voice-record-input');
-    if (input) input.value = '';
-    if (modal) modal.style.display = 'flex';
-    setTimeout(function(){ if (input) input.focus(); }, 30);
-}
-
-function closeVoiceRecordModal() {
-    const modal = document.getElementById('voice-record-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-function toggleVoiceBubble(el) {
-    if (!el) return;
-    el.classList.toggle('expanded');
-}
-
-async function sendVoiceRecordMessage() {
-    if (!currentChatContact) return;
-    const input = document.getElementById('voice-record-input');
-    const content = input ? input.value.trim() : '';
-    if (!content) {
-        alert('请输入录制内容');
-        return;
-    }
-    const duration = Math.max(1, Math.ceil(content.length / 3));
-    const msg = {
-        role: 'user',
-        type: 'voice',
-        content: content,
-        voiceText: content,
-        voiceDescription: '语音 ' + duration + '"',
-        duration: duration,
-        timestamp: Date.now()
-    };
-    await addMessage(currentChatContact.id, msg);
-    await updateRecentChats(currentChatContact.id, '[语音]', msg.timestamp);
-    closeVoiceRecordModal();
-    await renderChatMessages();
-    const chatContainer = document.getElementById('chat-messages');
-    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function handleChatPickedFile(event, type, label) {
@@ -1356,17 +1309,18 @@ function handleChatPickedFile(event, type, label) {
     reader.readAsDataURL(file);
 }
 
+
 async function sendChatExtraMessage(action) {
     if (!currentChatContact) return;
+    if (action === 'voice') { openVoiceRecordModal(); return; }
+    if (action === 'music') { openMusicPage(); closeChatExtraPanel(); return; }
     const actionText = {
         location: '发送了一个位置',
         redpacket: '发送了一个红包',
         gift: '发送了一份礼物',
         transfer: '发起了一笔转账',
-        voice: '发送了一条语音',
         favorite: '发送了收藏内容',
-        card: '发送了个人名片',
-        music: '分享了一首音乐'
+        card: '发送了个人名片'
     };
     const content = actionText[action] || '发送了一条消息';
     const msg = { role: 'user', type: action, content: content, timestamp: Date.now() };
@@ -1376,6 +1330,155 @@ async function sendChatExtraMessage(action) {
     await renderChatMessages();
     const chatContainer = document.getElementById('chat-messages');
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function toggleVoiceTranscript(el) {
+    if (el) el.classList.toggle('expanded');
+}
+
+function openVoiceRecordModal() {
+    const modal = document.getElementById('voice-record-modal');
+    const input = document.getElementById('voice-record-input');
+    closeChatExtraPanel();
+    if (input) input.value = '';
+    if (modal) modal.style.display = 'flex';
+    setTimeout(function(){ if (input) input.focus(); }, 30);
+}
+function closeVoiceRecordModal() {
+    const modal = document.getElementById('voice-record-modal');
+    if (modal) modal.style.display = 'none';
+}
+async function sendVoiceRecordMessage() {
+    if (!currentChatContact) return;
+    const input = document.getElementById('voice-record-input');
+    const text = (input ? input.value : '').trim();
+    if (!text) { alert('请输入录制内容'); return; }
+    const duration = Math.max(1, Math.ceil(text.replace(/\s/g, '').length / 3));
+    const msg = { role: 'user', type: 'voice', content: '语音 ' + duration + '"', voiceText: text, timestamp: Date.now() };
+    await addMessage(currentChatContact.id, msg);
+    await updateRecentChats(currentChatContact.id, '[语音] ' + duration + '"', msg.timestamp);
+    closeVoiceRecordModal();
+    await renderChatMessages();
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+window.openVoiceRecordModal = openVoiceRecordModal;
+window.closeVoiceRecordModal = closeVoiceRecordModal;
+window.sendVoiceRecordMessage = sendVoiceRecordMessage;
+window.toggleVoiceTranscript = toggleVoiceTranscript;
+
+let musicLibrary = [];
+let musicEditingId = null;
+let musicLocalSourceData = '';
+let musicMultiSelect = false;
+
+async function loadMusicLibrary() {
+    const saved = await dbGet('music_library', []);
+    musicLibrary = Array.isArray(saved) ? saved : [];
+}
+async function saveMusicLibrary() {
+    await dbSet('music_library', musicLibrary);
+}
+async function openMusicPage() {
+    await loadMusicLibrary();
+    renderMusicList();
+    document.getElementById('page-music').classList.add('active');
+    document.querySelector('.dock').style.display = 'none';
+}
+function closeMusicPage() {
+    document.getElementById('page-music').classList.remove('active');
+    const player = document.getElementById('music-player');
+    if (player) { player.pause(); player.style.display = 'none'; }
+    document.querySelector('.dock').style.display = 'flex';
+}
+function renderMusicList() {
+    const box = document.getElementById('music-list');
+    if (!box) return;
+    if (!musicLibrary.length) {
+        box.innerHTML = '<div class="music-empty">暂无歌曲<br>点击右上角 + 添加</div>';
+        return;
+    }
+    box.innerHTML = musicLibrary.map(function(item){
+        const cover = item.cover ? `<img src="${escapeHtml(item.cover)}" alt="">` : `<svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>`;
+        const check = musicMultiSelect ? '<span class="music-check"></span>' : '';
+        return `<div class="music-item" onclick="playMusicItem('${item.id}')">${check}<div class="music-cover">${cover}</div><div class="music-info"><div class="music-title">${escapeHtml(item.title || '未命名歌曲')}</div><div class="music-artist">${escapeHtml(item.artist || '未知歌手')}</div></div><button class="music-edit-btn" onclick="event.stopPropagation();openMusicAddModal('${item.id}')" aria-label="编辑歌曲"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2 1.57 9.06-9.06 1.18 1.18L6.18 20H5v-1.18zM18.71 9.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button></div>`;
+    }).join('');
+}
+function toggleMusicMultiSelect() {
+    musicMultiSelect = !musicMultiSelect;
+    renderMusicList();
+}
+function openMusicAddModal(id) {
+    musicEditingId = id || null;
+    musicLocalSourceData = '';
+    const item = musicEditingId ? musicLibrary.find(function(x){ return x.id === musicEditingId; }) : null;
+    const modal = document.getElementById('music-add-modal');
+    document.getElementById('music-modal-title').textContent = item ? '编辑歌曲' : '添加歌曲';
+    document.getElementById('music-title-input').value = item ? (item.title || '') : '';
+    document.getElementById('music-artist-input').value = item ? (item.artist || '') : '';
+    document.getElementById('music-url-input').value = item && item.isLocal ? '[本地文件]' : (item ? (item.url || '') : '');
+    document.getElementById('music-cover-input').value = item ? (item.cover || '') : '';
+    document.getElementById('music-lrc-input').value = item ? (item.lrc || '') : '';
+    if (item && item.isLocal) musicLocalSourceData = item.url || '';
+    if (modal) modal.style.display = 'flex';
+}
+function closeMusicAddModal() {
+    const modal = document.getElementById('music-add-modal');
+    if (modal) modal.style.display = 'none';
+    musicEditingId = null;
+    musicLocalSourceData = '';
+}
+function handleMusicLocalFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        musicLocalSourceData = e.target.result;
+        const input = document.getElementById('music-url-input');
+        if (input) input.value = '[本地文件]';
+    };
+    reader.readAsDataURL(file);
+}
+function handleMusicLrcFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const textarea = document.getElementById('music-lrc-input');
+        if (textarea) textarea.value = e.target.result || '';
+    };
+    reader.readAsText(file, 'utf-8');
+}
+async function saveMusicItem() {
+    const title = document.getElementById('music-title-input').value.trim();
+    const artist = document.getElementById('music-artist-input').value.trim();
+    const urlInput = document.getElementById('music-url-input').value.trim();
+    const cover = document.getElementById('music-cover-input').value.trim();
+    const lrc = document.getElementById('music-lrc-input').value;
+    const isLocal = urlInput === '[本地文件]';
+    const url = isLocal ? musicLocalSourceData : urlInput;
+    if (!title) { alert('请输入歌名'); return; }
+    if (!artist) { alert('请输入歌手'); return; }
+    if (!url) { alert('请输入音源URL或上传本地文件'); return; }
+    if (musicEditingId) {
+        const idx = musicLibrary.findIndex(function(x){ return x.id === musicEditingId; });
+        if (idx >= 0) musicLibrary[idx] = Object.assign({}, musicLibrary[idx], { title, artist, url, cover, lrc, isLocal });
+    } else {
+        musicLibrary.unshift({ id: 'music_' + Date.now(), title, artist, url, cover, lrc, isLocal, createdAt: Date.now() });
+    }
+    await saveMusicLibrary();
+    closeMusicAddModal();
+    renderMusicList();
+}
+function playMusicItem(id) {
+    const item = musicLibrary.find(function(x){ return x.id === id; });
+    if (!item || !item.url) return;
+    const player = document.getElementById('music-player');
+    if (!player) return;
+    player.src = item.url;
+    player.style.display = 'block';
+    player.play().catch(function(){ alert('播放失败，请检查音源URL或本地文件。'); });
 }
 
 let waitingForReply = false; 
@@ -3310,12 +3413,12 @@ async function refreshForumPosts(){
 
 
 // ========== [UPDATE-LOG] 每个版本显示一次更新内容 ==========
-const APP_VERSION = '0.0.01';
+const APP_VERSION = '0.0.04';
 const APP_UPDATE_LOG = [
-    '新增版本更新弹窗，首次进入当前版本会展示版本号与更新内容。',
-    '同一版本点击知道了后不再重复弹出，后续只需修改版本号即可重新展示。',
-    '设置页底部新增灰色小字版本号，便于核对当前包体版本。',
-    '补强 PWA 配置，统一使用 sw.js 注册，优化 Edge 添加桌面识别。'
+    '修正聊天页语音入口：恢复并使用输入栏内部原有麦克风语音按钮，不再依赖新增外置按钮。',
+    '点击输入栏内麦克风可直接弹出录制内容弹窗，发送后生成语音气泡。',
+    '语音气泡按 3 字/秒自动计算时长，点击气泡可展开 2px 圆角方形内容框查看录制文本。',
+    '同步更新版本弹窗内容，确保本版本首次打开会显示更新说明。'
 ];
 function initUpdateLog(){
     const versionText=document.getElementById('settings-version-text');
