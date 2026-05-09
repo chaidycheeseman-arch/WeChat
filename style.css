@@ -441,9 +441,6 @@
         }
 
 
-/* [CHAT-BUBBLE-TAIL-FIX] 去掉聊天气泡尖角，避免右侧出现竖线/黑线 */
-.message-row.other .message-bubble::before,
-
 .message-action-bar {
     position: absolute;
     background-color: rgba(0, 0, 0, 0.75);
@@ -1137,9 +1134,8 @@
 
 .chat-avatar-unread-badge {
     position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(45%, -45%);
+    top: -6px;
+    right: -6px;
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
@@ -1150,7 +1146,7 @@
     font-weight: 700;
     line-height: 18px;
     text-align: center;
-    z-index: 30;
+    z-index: 99;
     box-sizing: border-box;
     pointer-events: none;
 }
@@ -1815,7 +1811,9 @@
 .emoji-add-textarea{min-height:180px;resize:none;}
 
 
-/* [FORCE-NO-BUBBLE-TAIL] 彻底禁用聊天气泡伪元素尖角，避免任何竖线残留 */
+
+
+/* [CHAT-BUBBLE-NO-TAIL] 聊天气泡不使用左右尖角，彻底避免竖线残留 */
 .message-row.other .message-bubble::before,
 .message-row.other .message-bubble::after,
 .message-row.self .message-bubble::before,
@@ -1826,30 +1824,105 @@
     height: 0 !important;
     border: 0 !important;
 }
-.chat-list-item .list-icon-wrap {
-    position: relative !important;
-    overflow: visible !important;
-}
-.chat-list-item .list-icon-wrap img {
-    display: block;
-}
 
-
-/* unread badge must be anchored to the avatar top-right corner */
-.chat-list-item .list-icon-wrap {
+/* [CHAT-AVATAR-BADGE-ANCHOR] 未读徽章锚定头像本身右上角 */
+.chat-list-item .chat-avatar-box {
     width: 40px !important;
     height: 40px !important;
     position: relative !important;
     overflow: visible !important;
+    flex: 0 0 40px !important;
 }
-.chat-list-item .list-icon-wrap img {
+.chat-list-item .chat-avatar-box img {
     width: 40px !important;
     height: 40px !important;
     border-radius: 8px !important;
     display: block !important;
+    object-fit: cover !important;
 }
-.chat-list-item .list-icon-wrap .chat-avatar-unread-badge {
-    top: 0 !important;
-    right: 0 !important;
-    transform: translate(45%, -45%) !important;
+.chat-list-item .chat-avatar-box .chat-avatar-unread-badge {
+    top: -6px !important;
+    right: -6px !important;
+    transform: none !important;
 }
+
+/* ========== [VOICE-MESSAGE] 语音录制弹窗与可展开语音气泡 ========== */
+.chat-voice-icon { cursor: pointer; }
+.voice-record-modal-content { max-width: 340px; }
+.voice-record-tip {
+    color: #8f8f8f;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+    margin: -6px 0 12px;
+}
+.voice-record-input {
+    min-height: 112px;
+    resize: none;
+    line-height: 1.55;
+}
+.message-bubble:has(.voice-message) {
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    min-height: 0;
+}
+.voice-message {
+    min-width: 146px;
+    max-width: 230px;
+    cursor: pointer;
+    user-select: none;
+}
+.voice-main {
+    min-height: 38px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+}
+.message-row.self .voice-main {
+    background: #000;
+    color: #fff;
+}
+.message-row.other .voice-main {
+    background: #fff;
+    color: #000;
+}
+.voice-wifi-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    transform: rotate(90deg);
+}
+.message-row.self .voice-wifi-icon { fill: #fff; }
+.message-row.other .voice-wifi-icon { fill: #000; }
+.voice-desc {
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+}
+.voice-expanded {
+    display: none;
+    margin-top: 5px;
+    border-radius: 2px;
+    padding: 8px 9px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+.message-row.self .voice-expanded {
+    background: #000;
+    color: #fff;
+}
+.message-row.other .voice-expanded {
+    background: #fff;
+    color: #000;
+}
+.voice-message.expanded .voice-expanded { display: block; }
+
+/* [REPLY-BANNER-NO-EXTRA-TIME] 系统横幅自带时间，应用内不再额外展示时间 */
+.reply-banner-head { justify-content: flex-start; }
+.reply-banner-time { display: none !important; }

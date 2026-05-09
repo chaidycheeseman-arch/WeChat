@@ -294,8 +294,12 @@
 
         function updateUnreadDisplay() {
             const total = getTotalUnreadCount();
-            document.querySelector('#page-chats .nav-title').textContent = `微信 (${total})`;
-            renderChatList(); 
+            const titleEl = document.querySelector('#page-chats .nav-title');
+            if (titleEl) titleEl.textContent = `微信 (${total})`;
+            const chatsPage = document.getElementById('page-chats');
+            if (chatsPage && chatsPage.classList.contains('active')) {
+                renderChatList();
+            }
         }
         function updateClock() {
             const now = new Date();
@@ -359,7 +363,7 @@
             const item = document.createElement('div');
             item.className = 'reply-banner';
             const avatarHtml = payload.avatar ? `<img src="${escapeAttrText(payload.avatar)}" alt="">` : escapeAttrText(String(payload.name || '').slice(0, 1) || '微');
-            item.innerHTML = `<div class="reply-banner-avatar">${avatarHtml}</div><div class="reply-banner-main"><div class="reply-banner-head"><div class="reply-banner-name">${escapeAttrText(payload.name)}</div><div class="reply-banner-time">${escapeAttrText(payload.time)}</div></div><div class="reply-banner-text">${escapeAttrText(payload.message)}</div></div>`;
+            item.innerHTML = `<div class="reply-banner-avatar">${avatarHtml}</div><div class="reply-banner-main"><div class="reply-banner-head"><div class="reply-banner-name">${escapeAttrText(payload.name)}</div></div><div class="reply-banner-text">${escapeAttrText(payload.message)}</div></div>`;
             item.onclick = function() {
                 if (typeof openChatByContactId === 'function') openChatByContactId(payload.contactId);
                 item.classList.add('hide');
@@ -377,7 +381,7 @@
                 try { await Notification.requestPermission(); } catch (e) {}
             }
             if (Notification.permission !== 'granted') return;
-            const title = `${payload.name} ${payload.time}`;
+            const title = `${payload.name}`;
             const options = {
                 body: payload.message,
                 icon: payload.avatar || './icons/icon-192.png',
@@ -948,8 +952,13 @@
                     bubbleContent += `<video class="message-media-video" controls src="${escapeHtml(msg.content)}"></video>`;
                 } else if (msg.type === 'file') {
                     bubbleContent += `<div class="message-special-card"><div class="message-special-title">${escapeHtml(msg.fileName || '文件')}</div><div class="message-special-sub">${escapeHtml(msg.content || '已发送文件')}</div></div>`;
-                } else if (['location','redpacket','gift','transfer','voice','favorite','card','music'].includes(msg.type)) {
-                    const titles = { location: '位置', redpacket: '红包', gift: '礼物', transfer: '转账', voice: '语音', favorite: '收藏', card: '个人名片', music: '音乐' };
+                } else if (msg.type === 'voice') {
+                    const voiceText = String(msg.voiceText || msg.content || '');
+                    const voiceSeconds = Math.max(1, Number(msg.duration || Math.ceil(voiceText.length / 3) || 1));
+                    const voiceDesc = msg.voiceDescription || ('语音 ' + voiceSeconds + '"');
+                    bubbleContent += `<div class="voice-message" onclick="toggleVoiceBubble(this)"><div class="voice-main"><svg class="voice-wifi-icon" viewBox="0 0 24 24"><path d="M4 9.2C8.7 4.8 15.3 4.8 20 9.2l-1.9 1.9c-3.6-3.2-8.6-3.2-12.2 0L4 9.2zm3.8 3.8c2.4-2 6-2 8.4 0l-1.9 1.9c-1.3-1-3.3-1-4.6 0L7.8 13zm3.1 3.1c.7-.5 1.5-.5 2.2 0L12 18l-1.1-1.9z"/></svg><span class="voice-desc">${escapeHtml(voiceDesc)}</span></div><div class="voice-expanded">${escapeHtml(voiceText)}</div></div>`;
+                } else if (['location','redpacket','gift','transfer','favorite','card','music'].includes(msg.type)) {
+                    const titles = { location: '位置', redpacket: '红包', gift: '礼物', transfer: '转账', favorite: '收藏', card: '个人名片', music: '音乐' };
                     bubbleContent += `<div class="message-special-card"><div class="message-special-title">${titles[msg.type] || '消息'}</div><div class="message-special-sub">${escapeHtml(msg.content || '')}</div></div>`;
                 } else {
                     bubbleContent += escapeHtml(msg.content);
@@ -1270,7 +1279,58 @@ function handleChatExtraAction(action) {
         if (input) input.click();
         return;
     }
+    if (action === 'voice') {
+        openVoiceRecordModal();
+        return;
+    }
     sendChatExtraMessage(action);
+}
+
+
+function openVoiceRecordModal() {
+    if (!currentChatContact) return;
+    closeChatExtraPanel();
+    const modal = document.getElementById('voice-record-modal');
+    const input = document.getElementById('voice-record-input');
+    if (input) input.value = '';
+    if (modal) modal.style.display = 'flex';
+    setTimeout(function(){ if (input) input.focus(); }, 30);
+}
+
+function closeVoiceRecordModal() {
+    const modal = document.getElementById('voice-record-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function toggleVoiceBubble(el) {
+    if (!el) return;
+    el.classList.toggle('expanded');
+}
+
+async function sendVoiceRecordMessage() {
+    if (!currentChatContact) return;
+    const input = document.getElementById('voice-record-input');
+    const content = input ? input.value.trim() : '';
+    if (!content) {
+        alert('请输入录制内容');
+        return;
+    }
+    const duration = Math.max(1, Math.ceil(content.length / 3));
+    const msg = {
+        role: 'user',
+        type: 'voice',
+        content: content,
+        voiceText: content,
+        voiceDescription: '语音 ' + duration + '"',
+        duration: duration,
+        timestamp: Date.now()
+    };
+    await addMessage(currentChatContact.id, msg);
+    await updateRecentChats(currentChatContact.id, '[语音]', msg.timestamp);
+    closeVoiceRecordModal();
+    await renderChatMessages();
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function handleChatPickedFile(event, type, label) {
@@ -1633,17 +1693,59 @@ messages （最终发送）：最终发送给 {user} 的消息数组。单次回
                 .replace(/\s{2,}/g, ' ')
                 .trim();
         };
+        const splitTextToBubbles = function(text) {
+            const cleaned = cleanMessageContent(text);
+            if (!cleaned) return [];
+            let parts = cleaned
+                .replace(/([？！?…]+)/g, '$1\n')
+                .split(/\n+/)
+                .map(function(x) { return cleanMessageContent(x); })
+                .filter(Boolean);
+            if (parts.length < 4) parts = [cleaned];
+            while (parts.length < 4) {
+                let longestIndex = 0;
+                for (let i = 1; i < parts.length; i++) {
+                    if (parts[i].length > parts[longestIndex].length) longestIndex = i;
+                }
+                const textPart = parts[longestIndex];
+                if (textPart.length <= 2) break;
+                const mid = Math.ceil(textPart.length / 2);
+                let cut = textPart.indexOf(' ', Math.max(1, mid - 8));
+                if (cut < 0 || cut > mid + 8) cut = mid;
+                const left = cleanMessageContent(textPart.slice(0, cut));
+                const right = cleanMessageContent(textPart.slice(cut));
+                parts.splice(longestIndex, 1, left, right);
+                parts = parts.filter(Boolean);
+            }
+            const fillers = ['……', '等下', '我还没说完'];
+            let fillerIndex = 0;
+            while (parts.length < 4) {
+                parts.push(fillers[fillerIndex % fillers.length]);
+                fillerIndex++;
+            }
+            return parts.map(function(part) {
+                return { type: 'text', content: part };
+            });
+        };
+        const normalizeReplyMessages = function(list, rawText) {
+            let normalized = (Array.isArray(list) ? list : [])
+                .map(function(item) {
+                    if (!item) return null;
+                    const type = item.type || 'text';
+                    const content = type === 'text' ? cleanMessageContent(item.content) : String(item.content || '').trim();
+                    return content ? { type: type, content: content } : null;
+                })
+                .filter(Boolean);
+            if (normalized.length >= 4) return normalized;
+            const joined = normalized.map(function(item) { return item.content; }).join(' ') || rawText || '';
+            const split = splitTextToBubbles(joined);
+            return split.length >= 4 ? split : normalized;
+        };
         let parsedReplyMessages = [];
         try {
             const replyObject = JSON.parse(stripJsonFence(aiReply));
             if (replyObject && Array.isArray(replyObject.messages)) {
-                parsedReplyMessages = replyObject.messages.map(function(item) {
-                    if (!item) return null;
-                    return {
-                        type: item.type || 'text',
-                        content: (item.type === 'text' || !item.type) ? cleanMessageContent(item.content) : String(item.content || '').trim()
-                    };
-                }).filter(function(item) { return item && item.content; });
+                parsedReplyMessages = normalizeReplyMessages(replyObject.messages, aiReply);
             }
         } catch (e) {
             console.log('三段式JSON解析失败，尝试兼容旧格式:', e);
@@ -1651,22 +1753,18 @@ messages （最终发送）：最终发送给 {user} 的消息数组。单次回
         if (!parsedReplyMessages.length) {
             const bubbles = aiReply.split('|||').map(b => b.trim()).filter(b => b);
             const replyParts = bubbles.length > 0 ? bubbles : [aiReply];
-            parsedReplyMessages = replyParts.map(function(bubbleStr) {
+            parsedReplyMessages = normalizeReplyMessages(replyParts.map(function(bubbleStr) {
                 try {
                     const bubble = JSON.parse(bubbleStr);
-                    if (bubble && bubble.type && bubble.content) {
-                        return {
-                            type: bubble.type,
-                            content: (bubble.type === 'text') ? cleanMessageContent(bubble.content) : String(bubble.content).trim()
-                        };
-                    }
+                    if (bubble && bubble.type && bubble.content) return bubble;
                 } catch (e) {
                     console.log('JSON解析失败，当作普通文本:', bubbleStr);
                 }
-                return { type: 'text', content: cleanMessageContent(bubbleStr) };
-            }).filter(function(item) { return item && item.content; });
+                return { type: 'text', content: bubbleStr };
+            }), aiReply);
         }
 
+        parsedReplyMessages = normalizeReplyMessages(parsedReplyMessages, aiReply);
         const wait = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
         const CHAR_MESSAGE_INTERVAL = 1800;
         let previewText = parsedReplyMessages[0] ? String(parsedReplyMessages[0].content).substring(0, 80) : aiReply.substring(0, 50);
@@ -1737,10 +1835,6 @@ async function renderChatList() {
             delete unreadReadAt[contactId];
         }
     });
-    // [UNREAD-RECOUNT] 渲染消息页前按历史消息真实气泡数重算，保证头像徽章和微信(n)永远一致
-    for (const recent of recents) {
-        await recountUnreadForContact(recent.id);
-    }
     await dbSet('wechat_unread', unreadMessages);
     await dbSet('wechat_unread_read_at', unreadReadAt);
     
@@ -1790,7 +1884,7 @@ function renderChatItem(recent, contacts, isPinned) {
             <div class="chat-action-btn chat-action-delete" onclick="deleteChat(${contact.id}, event)">删除</div>
         </div>
         <div class="list-item chat-list-item" onclick="startChat(${contactIndex})" style="${pinnedBg}">
-            <div class="list-icon-wrap" style="position:relative;">
+            <div class="list-icon-wrap chat-avatar-box">
                 <img src="${avatarSrc}">
                 ${unreadBadge}
             </div>
