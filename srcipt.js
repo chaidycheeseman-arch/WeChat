@@ -279,6 +279,134 @@
         }
         setInterval(updateClock, 1000);
         updateClock();
+
+
+        /** [REPLY-NOTIFY] 回复横幅、清脆提示音、后台系统通知 */
+        let replyAudioCtx = null;
+        function escapeAttrText(text) {
+            return String(text || '').replace(/[&<>\"]/g, function(ch) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]);
+            });
+        }
+        function getActivePageId() {
+            const pages = Array.from(document.querySelectorAll('.page.active'));
+            return pages.length ? pages[pages.length - 1].id : '';
+        }
+        function shouldAlertForReply(contactId) {
+            const chatPageOpen = getActivePageId() === 'page-chat' && currentChatContact && String(currentChatContact.id) === String(contactId);
+            return document.hidden || !chatPageOpen;
+        }
+        function playReplySound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                replyAudioCtx = replyAudioCtx || new AudioContext();
+                if (replyAudioCtx.state === 'suspended') replyAudioCtx.resume();
+                const now = replyAudioCtx.currentTime;
+                const gain = replyAudioCtx.createGain();
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.18, now + 0.012);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+                gain.connect(replyAudioCtx.destination);
+                [1046.5, 1318.5, 1760].forEach(function(freq, index) {
+                    const osc = replyAudioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.045);
+                    osc.connect(gain);
+                    osc.start(now + index * 0.045);
+                    osc.stop(now + 0.18 + index * 0.045);
+                });
+            } catch (e) {
+                console.warn('消息提示音播放失败：', e);
+            }
+        }
+        function ensureReplyPermission() {
+            if (!('Notification' in window)) return;
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().catch(function(){});
+            }
+        }
+        function showReplyBanner(payload) {
+            if (document.hidden) return;
+            const stack = document.getElementById('reply-banner-stack');
+            if (!stack) return;
+            const item = document.createElement('div');
+            item.className = 'reply-banner';
+            const avatarHtml = payload.avatar ? `<img src="${escapeAttrText(payload.avatar)}" alt="">` : escapeAttrText(String(payload.name || '').slice(0, 1) || '微');
+            item.innerHTML = `<div class="reply-banner-avatar">${avatarHtml}</div><div class="reply-banner-main"><div class="reply-banner-head"><div class="reply-banner-name">${escapeAttrText(payload.name)}</div><div class="reply-banner-time">${escapeAttrText(payload.time)}</div></div><div class="reply-banner-text">${escapeAttrText(payload.message)}</div></div>`;
+            item.onclick = function() {
+                if (typeof openChatByContactId === 'function') openChatByContactId(payload.contactId);
+                item.classList.add('hide');
+                setTimeout(function(){ item.remove(); }, 180);
+            };
+            stack.appendChild(item);
+            setTimeout(function(){
+                item.classList.add('hide');
+                setTimeout(function(){ item.remove(); }, 220);
+            }, 4200);
+        }
+        async function showReplySystemNotification(payload) {
+            if (!('Notification' in window)) return;
+            if (Notification.permission === 'default') {
+                try { await Notification.requestPermission(); } catch (e) {}
+            }
+            if (Notification.permission !== 'granted') return;
+            const title = `${payload.name} ${payload.time}`;
+            const options = {
+                body: payload.message,
+                icon: payload.avatar || './icons/icon-192.png',
+                badge: './icons/icon-192.png',
+                tag: `wechat-reply-${payload.contactId}-${payload.timestamp}`,
+                renotify: true,
+                data: { contactId: payload.contactId }
+            };
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                try {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.showNotification(title, options);
+                    return;
+                } catch (e) {}
+            }
+            try { new Notification(title, options); } catch (e) {}
+        }
+        async function notifyReplyMessage(contact, message, timestamp, index) {
+            if (!contact || !message) return;
+            const payload = {
+                contactId: contact.id,
+                name: contact.char && contact.char.username ? contact.char.username : '联系人',
+                avatar: contact.char && contact.char.avatar ? contact.char.avatar : '',
+                message: String(message || ''),
+                time: new Date(timestamp || Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                timestamp: timestamp || Date.now()
+            };
+            setTimeout(function() {
+                if (!shouldAlertForReply(contact.id)) return;
+                playReplySound();
+                showReplyBanner(payload);
+                if (document.hidden) showReplySystemNotification(payload);
+            }, Math.max(0, index || 0) * 650);
+        }
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) ensureReplyPermission();
+        });
+        document.addEventListener('pointerdown', function() {
+            ensureReplyPermission();
+        }, { once: true });
+
+        /** [BACKGROUND-KEEPALIVE] 后台保活：维持 Service Worker 通道与可用通知权限 */
+        let backgroundKeepAliveTimer = null;
+        function startBackgroundKeepAlive() {
+            if (backgroundKeepAliveTimer) return;
+            backgroundKeepAliveTimer = setInterval(function() {
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'KEEP_ALIVE', time: Date.now() });
+                }
+            }, 25000);
+        }
+        window.addEventListener('load', startBackgroundKeepAlive);
+        document.addEventListener('visibilitychange', function() {
+            startBackgroundKeepAlive();
+        });
         async function updateBattery() {
             const batteryLevelEl = document.getElementById('battery-level');
             if ('getBattery' in navigator) {
@@ -1021,20 +1149,29 @@ ${contactChar.detail || '（无特殊设定）'}
         const bubbles = aiReply.split('|||').map(b => b.trim()).filter(b => b);
         
         // [DB-WRITE] 将AI回复消息批量追加到 IndexedDB messages 表
+        const generatedReplyMessages = [];
         if (bubbles.length === 0) {
-            await addMessage(contactId, { role: 'assistant', content: aiReply, timestamp: Date.now() });
+            const msgTime = Date.now();
+            await addMessage(contactId, { role: 'assistant', content: aiReply, timestamp: msgTime });
+            generatedReplyMessages.push({ content: aiReply, timestamp: msgTime });
         } else {
             for (const bubbleStr of bubbles) {
                 try {
                     const bubble = JSON.parse(bubbleStr);
                     if (bubble.type && bubble.content) {
-                        await addMessage(contactId, { role: 'assistant', content: bubble.content, timestamp: Date.now() });
+                        const msgTime = Date.now();
+                        await addMessage(contactId, { role: 'assistant', content: bubble.content, timestamp: msgTime });
+                        generatedReplyMessages.push({ content: bubble.content, timestamp: msgTime });
                     } else {
-                        await addMessage(contactId, { role: 'assistant', content: bubbleStr, timestamp: Date.now() });
+                        const msgTime = Date.now();
+                        await addMessage(contactId, { role: 'assistant', content: bubbleStr, timestamp: msgTime });
+                        generatedReplyMessages.push({ content: bubbleStr, timestamp: msgTime });
                     }
                 } catch (e) {
                     console.log('JSON解析失败，当作普通文本:', bubbleStr);
-                    await addMessage(contactId, { role: 'assistant', content: bubbleStr, timestamp: Date.now() });
+                    const msgTime = Date.now();
+                    await addMessage(contactId, { role: 'assistant', content: bubbleStr, timestamp: msgTime });
+                    generatedReplyMessages.push({ content: bubbleStr, timestamp: msgTime });
                 }
             }
         }
@@ -1055,7 +1192,16 @@ ${contactChar.detail || '（无特殊设定）'}
         // [DB-WRITE] 更新最近聊天列表
         await updateRecentChats(contactId, previewText, Date.now());
 
-        await renderChatMessages();
+        if (document.hidden || !currentChatContact || String(currentChatContact.id) !== String(contactId) || getActivePageId() !== 'page-chat') {
+            incrementUnread(contactId);
+        }
+        generatedReplyMessages.forEach(function(item, idx) {
+            notifyReplyMessage({ id: contactId, char: contactChar }, item.content, item.timestamp, idx);
+        });
+
+        if (currentChatContact && String(currentChatContact.id) === String(contactId)) {
+            await renderChatMessages();
+        }
 
         setTimeout(() => {
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -2569,14 +2715,71 @@ async function refreshForumPosts(){
 }
 
 
+// ========== [UPDATE-LOG] 每个版本显示一次更新内容 ==========
+const APP_VERSION = '0.0.01';
+const APP_UPDATE_LOG = [
+    '新增版本更新弹窗，首次进入当前版本会展示版本号与更新内容。',
+    '同一版本点击知道了后不再重复弹出，后续只需修改版本号即可重新展示。',
+    '设置页底部新增灰色小字版本号，便于核对当前包体版本。',
+    '补强 PWA 配置，统一使用 sw.js 注册，优化 Edge 添加桌面识别。'
+];
+function initUpdateLog(){
+    const versionText=document.getElementById('settings-version-text');
+    if(versionText)versionText.textContent='版本 '+APP_VERSION;
+    const modal=document.getElementById('update-modal');
+    const badge=document.getElementById('update-version-badge');
+    const content=document.getElementById('update-content');
+    if(!modal||!badge||!content)return;
+    badge.textContent='v'+APP_VERSION;
+    content.textContent=APP_UPDATE_LOG.map((item,index)=>(index+1)+'. '+item).join('\n');
+    const acknowledged=localStorage.getItem('update_ack_version');
+    if(acknowledged!==APP_VERSION){
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden','false');
+    }
+}
+function confirmUpdateLog(){
+    localStorage.setItem('update_ack_version',APP_VERSION);
+    const modal=document.getElementById('update-modal');
+    if(modal){
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden','true');
+    }
+}
+
+
         loadUserData();
+        initUpdateLog();
 
 
 // ========== [PWA] 注册 Service Worker ==========
-if ('serviceWorker' in navigator) {
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(event) {
+    deferredInstallPrompt = event;
+});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js').catch(function (err) {
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
+            if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            if (reg.installing) {
+                reg.installing.addEventListener('statechange', function() {
+                    if (reg.installing && reg.installing.state === 'installed') navigator.serviceWorker.ready.catch(function(){});
+                });
+            }
+        }).catch(function (err) {
             console.warn('Service Worker 注册失败：', err);
         });
     });
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'OPEN_CHAT' && event.data.contactId) {
+            openChatByContactId(event.data.contactId);
+        }
+    });
 }
+window.addEventListener('load', function() {
+    const params = new URLSearchParams(location.search);
+    const contactId = params.get('chat');
+    if (contactId) {
+        setTimeout(function(){ openChatByContactId(contactId); }, 300);
+    }
+});

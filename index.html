@@ -7,13 +7,25 @@
     <!-- ========== [DB] 引入 Dexie.js —— IndexedDB 封装库 ========== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
+    <div id="reply-banner-stack" class="reply-banner-stack"></div>
+    <div id="update-modal" class="update-modal" aria-hidden="true">
+        <div class="update-card">
+            <div class="update-card-head">
+                <div>更新日志</div>
+                <div id="update-version-badge" class="update-version-badge">v0.0.01</div>
+            </div>
+            <div id="update-content" class="update-content"></div>
+            <button class="update-know-btn" onclick="confirmUpdateLog()">知道了<span></span></button>
+        </div>
+    </div>
+
     <div class="status-bar">
         <div id="clock">00:00</div>
         <div class="battery-container">
@@ -274,6 +286,7 @@
                         <svg class="list-arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
                     </div>
                 </div>
+                <div class="settings-version-text" id="settings-version-text">版本 0.0.01</div>
             </div>
         </div>
 

@@ -1464,3 +1464,83 @@
     right:0;
     bottom:0;
 }
+
+
+/* ========== [REPLY-BANNER] 非当前聊天页与后台逐条回复横幅 ========== */
+.reply-banner-stack {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    left: 10px;
+    right: 10px;
+    z-index: 5000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.reply-banner {
+    min-height: 58px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.96);
+    border: .5px solid rgba(0,0,0,.08);
+    box-shadow: 0 14px 36px rgba(0,0,0,.16);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    transform: translateY(-18px);
+    opacity: 0;
+    animation: replyBannerIn .22s ease forwards;
+    pointer-events: auto;
+}
+.reply-banner.hide { animation: replyBannerOut .18s ease forwards; }
+.reply-banner-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #000;
+    overflow: hidden;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+.reply-banner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.reply-banner-main { flex: 1; min-width: 0; }
+.reply-banner-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+.reply-banner-name { font-size: 14px; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reply-banner-time { font-size: 11px; color: var(--text-gray); white-space: nowrap; }
+.reply-banner-text { font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes replyBannerIn { to { transform: translateY(0); opacity: 1; } }
+@keyframes replyBannerOut { to { transform: translateY(-18px); opacity: 0; } }
+
+
+/* ========== [UPDATE-LOG] 版本更新弹窗与设置页版本号 ========== */
+.update-modal{
+    position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.58);z-index:3000;padding:24px;
+}
+.update-modal.show{display:flex;}
+.update-card{
+    width:min(82vw,340px);aspect-ratio:1/1.5;background:#fff;color:#000;border-radius:26px;
+    box-shadow:0 22px 60px rgba(0,0,0,.18);padding:24px 22px 18px;
+    display:flex;flex-direction:column;position:relative;overflow:hidden;
+}
+.update-card:before{
+    content:'';position:absolute;left:20px;right:20px;top:18px;height:1px;background:#000;opacity:.08;
+}
+.update-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;font-size:23px;font-weight:900;letter-spacing:-.04em;margin-top:8px;}
+.update-version-badge{font-size:12px;font-weight:900;border:1px solid #000;border-radius:999px;padding:5px 9px;line-height:1;white-space:nowrap;margin-top:3px;}
+.update-content{margin-top:22px;white-space:pre-line;font-size:14px;line-height:1.75;color:#222;letter-spacing:.01em;flex:1;overflow-y:auto;text-align:left;}
+.update-know-btn{
+    align-self:flex-end;border:none;background:#000;color:#fff;border-radius:999px;height:38px;padding:0 12px 0 18px;
+    display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:850;
+}
+.update-know-btn span{width:24px;height:24px;border-radius:50%;background:#fff;display:inline-flex;align-items:center;justify-content:center;position:relative;}
+.update-know-btn span:before{content:'';width:7px;height:7px;border-top:2px solid #000;border-right:2px solid #000;transform:rotate(45deg);margin-left:-2px;}
+.settings-version-text{text-align:center;color:#b0b0b0;font-size:11px;line-height:1;padding:18px 0 26px;}

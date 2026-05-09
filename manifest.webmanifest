@@ -1,12 +1,12 @@
 {
-  "name": "WeChat Forum PWA",
+  "name": "WeChat Forum",
   "short_name": "WeChat",
-  "start_url": "./index.html",
+  "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -20,5 +20,16 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/wechat-forum-pwa/",
+  "description": "WeChat style forum and chat PWA",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "categories": [
+    "social",
+    "utilities"
+  ],
+  "lang": "zh-CN"
 }

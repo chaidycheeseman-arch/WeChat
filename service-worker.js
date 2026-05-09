@@ -1,10 +1,12 @@
-const CACHE_NAME = 'wechat-forum-pwa-v1';
+const CACHE_NAME = 'wechat-forum-pwa-v4';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './srcipt.js',
   './manifest.webmanifest',
+  './sw.js',
+  './service-worker.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js'
@@ -27,4 +29,31 @@ self.addEventListener('fetch', event => {
     caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => null);
     return response;
   }).catch(() => caches.match('./index.html'))));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const contactId = event.notification.data && event.notification.data.contactId;
+  event.waitUntil((async () => {
+    const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of allClients) {
+      if ('focus' in client) {
+        client.focus();
+        if (contactId) client.postMessage({ type: 'OPEN_CHAT', contactId });
+        return;
+      }
+    }
+    const url = contactId ? `./index.html?chat=${encodeURIComponent(contactId)}` : './index.html';
+    if (clients.openWindow) await clients.openWindow(url);
+  })());
+});
+
+let lastKeepAliveAt = 0;
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'KEEP_ALIVE') {
+    lastKeepAliveAt = event.data.time || Date.now();
+  }
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
