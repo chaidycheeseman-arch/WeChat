@@ -2368,7 +2368,7 @@ async function openForum(){
     await renderForumMine();
     switchForumDock(forumCurrentDock || 'home');
 }
-function closeForum(){document.getElementById('page-forum').classList.remove('active');document.getElementById('page-forum-compose').classList.remove('active');showMainDock(true);}
+function closeForum(){document.getElementById('page-forum').classList.remove('active');document.getElementById('page-forum-compose').classList.remove('active');const fd=document.getElementById('page-forum-detail');if(fd)fd.classList.remove('active');showMainDock(true);}
 function toggleForumManage(){document.getElementById('forum-management-panel').classList.toggle('show');}
 
 async function loadForumState(){
@@ -2411,7 +2411,7 @@ async function deleteForumPreset(){const idx=document.getElementById('forum-pres
 
 function renderForumGroups(){
     const box=document.getElementById('forum-group-tabs');
-    box.innerHTML=forumGroups.map(g=>`<button class="forum-chip ${g===currentForumGroup?'active':''}" onclick="selectForumGroup('${forumEscape(g)}')"><span>${forumEscape(g)}</span><span class="forum-chip-x" onclick="deleteForumGroup(event,'${forumEscape(g)}')">×</span></button>`).join('')+`<button class="forum-chip forum-chip-add" onclick="addForumGroup()">+</button>`;
+    box.innerHTML=forumGroups.map(g=>`<button class="forum-chip ${g===currentForumGroup?'active':''}" onclick="selectForumGroup('${forumEscape(g)}')"><span>${forumEscape(g)}</span><span class="forum-chip-x" onclick="deleteForumGroup(event,'${forumEscape(g)}')">x</span></button>`).join('')+`<button class="forum-chip forum-chip-add" onclick="addForumGroup()">+</button>`;
 }
 async function selectForumGroup(g){currentForumGroup=g;await dbSet('forum_current_group',g);renderForumGroups();await renderForumPosts();}
 function addForumGroup(){forumPrompt('添加分组','分组名','',async name=>{if(!name)return;if(forumGroups.includes(name))return alert('分组已存在');forumGroups.push(name);await dbSet('forum_groups',forumGroups);renderForumGroups();});}
@@ -2423,9 +2423,30 @@ async function renderForumPosts(){
     const list=posts.filter(p=>!currentForumGroup||p.group===currentForumGroup);
     document.getElementById('forum-post-list').innerHTML=list.length?list.map(renderForumPost).join(''):'<div class="forum-empty">当前分组还没有帖子。<br>点击右下角 + 发布，或点击刷新调用 API 生成。</div>';
 }
+function forumIconSvg(type){
+    const icons={
+        heat:'<svg viewBox="0 0 24 24"><path d="M13 3c1.4 3.1-.4 4.6-1.8 6-1.2 1.2-2.2 2.4-2.2 4.5a3.7 3.7 0 0 0 7.4 0c0-1.4-.5-2.5-1.3-3.5 2.6 1.4 4.4 3.7 4.4 6.4A7.5 7.5 0 0 1 4.5 16.4c0-3.7 2.8-6.1 5-8.1C11.2 6.8 12.4 5.2 13 3z"/></svg>',
+        repost:'<svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>',
+        comment:'<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-6.5A8 8 0 1 1 21 12z"/></svg>',
+        like:'<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.2 5.2 0 0 0-7.4 0L12 6l-1.4-1.4a5.2 5.2 0 1 0-7.4 7.4L12 20.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4z"/></svg>'
+    };
+    return icons[type]||'';
+}
+function forumPostHeat(p){return Number(p.heat ?? ((p.likes||0)+(p.replies||0)*2+(p.reposts||0)*3));}
 function renderForumPost(p){
     const images=(p.images||[]).slice(0,9).map(x=>`<div class="forum-post-image">${x.type==='image'?`<img src="${x.content}">`:forumEscape(x.content)}</div>`).join('');
-    return `<article class="forum-post"><div class="forum-avatar">${forumAvatarHtml(p.avatar,p.author)}</div><div class="forum-post-body"><div class="forum-post-head"><div class="forum-author">${forumEscape(p.author||'匿名')}</div><div class="forum-post-sub">${forumEscape(p.idText||'@forum')} · ${forumEscape(p.time||'刚刚')}</div></div><div class="forum-post-title">${forumEscape(p.title||'无标题')}</div><div class="forum-post-text">${forumEscape(p.body||'')}</div>${images?`<div class="forum-post-images">${images}</div>`:''}<div class="forum-post-actions"><span>↻ ${p.reposts||0}</span><span>💬 ${p.replies||0}</span><span>♥ ${p.likes||0}</span></div></div></article>`;
+    return `<article class="forum-post" onclick="openForumDetail(${Number(p.id)||0})"><div class="forum-avatar">${forumAvatarHtml(p.avatar,p.author)}</div><div class="forum-post-body"><div class="forum-post-head"><div class="forum-author">${forumEscape(p.author||'匿名')}</div><div class="forum-post-sub">${forumEscape(p.idText||'@forum')} · ${forumEscape(p.time||'刚刚')}</div></div><div class="forum-post-title">${forumEscape(p.title||'无标题')}</div><div class="forum-post-text">${forumEscape(p.body||'')}</div>${images?`<div class="forum-post-images">${images}</div>`:''}<div class="forum-post-actions"><button class="forum-action-btn" onclick="event.stopPropagation();bumpForumMetric(${Number(p.id)||0},'heat')">${forumIconSvg('heat')}<span>热度 ${forumPostHeat(p)}</span></button><button class="forum-action-btn" onclick="event.stopPropagation();bumpForumMetric(${Number(p.id)||0},'reposts')">${forumIconSvg('repost')}<span>转发 ${p.reposts||0}</span></button><button class="forum-action-btn" onclick="event.stopPropagation();openForumDetail(${Number(p.id)||0})">${forumIconSvg('comment')}<span>评论 ${p.replies||0}</span></button><button class="forum-action-btn" onclick="event.stopPropagation();bumpForumMetric(${Number(p.id)||0},'likes')">${forumIconSvg('like')}<span>喜欢 ${p.likes||0}</span></button></div></div></article>`;
+}
+async function bumpForumMetric(postId,key){
+    const posts=await getForumPosts();
+    const p=posts.find(x=>Number(x.id)===Number(postId));
+    if(!p)return;
+    if(key==='heat')p.heat=forumPostHeat(p)+1;else p[key]=Number(p[key]||0)+1;
+    await setForumPosts(posts);
+    await renderForumPosts();
+    await renderForumHot();
+    await renderForumMine();
+    if(currentForumDetailPostId&&Number(currentForumDetailPostId)===Number(postId))await renderForumDetailPost(postId);
 }
 
 function switchForumDock(name){
@@ -2444,24 +2465,108 @@ function switchForumDock(name){
     if(name==='mine') actions.innerHTML=`<button class="forum-mini-btn" onclick="editForumMine()">编辑</button>`;
 }
 
-async function renderForumHot(){const q=(document.getElementById('forum-hot-search')?.value||'').trim();const posts=await getForumPosts();const sorted=[...posts].sort((a,b)=>(b.likes+b.replies*2+b.reposts*3)-(a.likes+a.replies*2+a.reposts*3)).filter(p=>!q||String(p.title+p.body+p.author).includes(q)).slice(0,30);document.getElementById('forum-hot-list').innerHTML=sorted.length?sorted.map((p,i)=>`<div class="forum-hot-item"><div class="forum-rank">${i+1}</div><div class="forum-hot-title">${forumEscape(p.title||'无标题')}</div><div class="forum-hot-count">${(p.likes||0)+(p.replies||0)*2+(p.reposts||0)*3} 热度</div></div>`).join(''):'<div class="forum-empty">暂无热搜，刷新或发帖后会自动生成。</div>';}
+async function renderForumHot(){const q=(document.getElementById('forum-hot-search')?.value||'').trim();const posts=await getForumPosts();const sorted=[...posts].sort((a,b)=>forumPostHeat(b)-forumPostHeat(a)).filter(p=>!q||String(p.title+p.body+p.author).includes(q)).slice(0,30);document.getElementById('forum-hot-list').innerHTML=sorted.length?sorted.map((p,i)=>`<div class="forum-hot-item" onclick="openForumDetail(${Number(p.id)||0})"><div class="forum-rank">${i+1}</div><div class="forum-hot-title">${forumEscape(p.title||'无标题')}</div><div class="forum-hot-count">${forumPostHeat(p)} 热度</div></div>`).join(''):'<div class="forum-empty">暂无热搜，刷新或发帖后会自动生成。</div>';}
 async function renderForumDM(){const contacts=await getContacts();let dms=await dbGet('forum_dms',[]);if(!dms.length&&contacts.length){dms=contacts.slice(0,8).map((c,i)=>({name:forumContactName(c),snippet:'论坛私信会在这里显示。',time:i?'昨天':'刚刚'}));await dbSet('forum_dms',dms);}document.getElementById('forum-dm-list').innerHTML=dms.length?dms.map(d=>`<div class="forum-dm-item"><div class="forum-avatar">${forumAvatarHtml(d.avatar,d.name)}</div><div class="forum-dm-content"><div class="forum-dm-name">${forumEscape(d.name)}</div><div class="forum-dm-snippet">${forumEscape(d.snippet)}</div></div><div class="forum-dm-time">${forumEscape(d.time)}</div></div>`).join(''):'<div class="forum-empty">暂无私信。</div>';}
 async function refreshForumDM(){const contacts=await getContacts();const dms=contacts.slice(0,12).map((c,i)=>({name:forumContactName(c),avatar:c.avatar||c.char?.avatar||'',snippet:['刚刚看到了你的帖子。','这个设定很有意思。','要不要开一个新话题？','论坛那边有人在讨论你。'][i%4],time:forumNowText()}));await dbSet('forum_dms',dms);await renderForumDM();}
 async function getForumMine(){const defName=await dbGet('wechat_nickname','微信用户');const defAvatar=await dbGet('wechat_avatar','');return Object.assign({name:defName,avatar:defAvatar,cover:'',join:'加入于 2026-05-09',fans:0,following:0,likes:0},await dbGet('forum_mine',{}));}
 function setForumMineTab(t){forumMineTab=t;renderForumMine();}
-async function renderForumMine(){const m=await getForumMine();const posts=await getForumPosts();const minePosts=posts.filter(p=>p.mine);const tabPosts=forumMineTab==='posts'?minePosts:forumMineTab==='reply'?posts.filter(p=>!p.mine).slice(0,10):posts.filter(p=>(p.reposts||0)>0).slice(0,10);document.getElementById('forum-mine-content').innerHTML=`<div class="forum-mine-cover" onclick="editForumMine()">${m.cover?`<img src="${forumEscape(m.cover)}">`:''}</div><div class="forum-mine-card" onclick="editForumMine()"><div class="forum-mine-top"><div class="forum-mine-avatar">${forumAvatarHtml(m.avatar,m.name)}</div><div><div class="forum-mine-name">${forumEscape(m.name)}</div><div class="forum-mine-join">♡ ${forumEscape(m.join)}</div></div></div><div class="forum-mine-stats"><span><b>${forumEscape(m.fans)}</b>粉丝</span><span><b>${forumEscape(m.following)}</b>关注</span><span><b>${forumEscape(m.likes)}</b>获赞</span></div></div><div class="forum-mine-tabs"><button class="${forumMineTab==='posts'?'active':''}" onclick="event.stopPropagation();setForumMineTab('posts')">帖子</button><button class="${forumMineTab==='reply'?'active':''}" onclick="event.stopPropagation();setForumMineTab('reply')">回复</button><button class="${forumMineTab==='repost'?'active':''}" onclick="event.stopPropagation();setForumMineTab('repost')">转发</button></div><div class="forum-post-list">${tabPosts.length?tabPosts.map(renderForumPost).join(''):'<div class="forum-empty">这里还没有内容。</div>'}</div>`;}
+async function renderForumMine(){const m=await getForumMine();const posts=await getForumPosts();const minePosts=posts.filter(p=>p.mine);const tabPosts=forumMineTab==='posts'?minePosts:forumMineTab==='reply'?posts.filter(p=>!p.mine).slice(0,10):posts.filter(p=>(p.reposts||0)>0).slice(0,10);document.getElementById('forum-mine-content').innerHTML=`<div class="forum-mine-cover" onclick="editForumMine()">${m.cover?`<img src="${forumEscape(m.cover)}">`:''}</div><div class="forum-mine-card" onclick="editForumMine()"><div class="forum-mine-top"><div class="forum-mine-avatar">${forumAvatarHtml(m.avatar,m.name)}</div><div><div class="forum-mine-name">${forumEscape(m.name)}</div><div class="forum-mine-join">${forumEscape(m.join)}</div></div></div><div class="forum-mine-stats"><span><b>${forumEscape(m.fans)}</b>粉丝</span><span><b>${forumEscape(m.following)}</b>关注</span><span><b>${forumEscape(m.likes)}</b>获赞</span></div></div><div class="forum-mine-tabs"><button class="${forumMineTab==='posts'?'active':''}" onclick="event.stopPropagation();setForumMineTab('posts')">帖子</button><button class="${forumMineTab==='reply'?'active':''}" onclick="event.stopPropagation();setForumMineTab('reply')">回复</button><button class="${forumMineTab==='repost'?'active':''}" onclick="event.stopPropagation();setForumMineTab('repost')">转发</button></div><div class="forum-post-list">${tabPosts.length?tabPosts.map(renderForumPost).join(''):'<div class="forum-empty">这里还没有内容。</div>'}</div>`;}
 async function editForumMine(){const m=await getForumMine();openForumModal('编辑我的主页',`<div class="forum-modal-field"><div class="forum-label">头像（图片链接或 Base64）</div><input id="fm-avatar" class="modal-input" value="${forumEscape(m.avatar||'')}"></div><div class="forum-modal-field"><div class="forum-label">背景图（图片链接或 Base64）</div><input id="fm-cover" class="modal-input" value="${forumEscape(m.cover||'')}"></div><div class="forum-modal-field"><div class="forum-label">昵称</div><input id="fm-name" class="modal-input" value="${forumEscape(m.name)}"></div><div class="forum-modal-field"><div class="forum-label">日历线条 + 加入时间</div><input id="fm-join" class="modal-input" value="${forumEscape(m.join)}"></div><div class="forum-modal-field"><div class="forum-label">粉丝</div><input id="fm-fans" class="modal-input" value="${forumEscape(m.fans)}"></div><div class="forum-modal-field"><div class="forum-label">关注</div><input id="fm-following" class="modal-input" value="${forumEscape(m.following)}"></div><div class="forum-modal-field"><div class="forum-label">获赞数</div><input id="fm-likes" class="modal-input" value="${forumEscape(m.likes)}"></div>`,async()=>{const next={avatar:document.getElementById('fm-avatar').value,cover:document.getElementById('fm-cover').value,name:document.getElementById('fm-name').value||'微信用户',join:document.getElementById('fm-join').value||'加入于 2026-05-09',fans:document.getElementById('fm-fans').value||0,following:document.getElementById('fm-following').value||0,likes:document.getElementById('fm-likes').value||0};await dbSet('forum_mine',next);closeForumModal();await renderForumMine();});}
+
+let currentForumDetailPostId = null;
+function showForumLoading(show){const el=document.getElementById('forum-loading');if(el)el.classList.toggle('show',!!show);}
+function forumCommentKey(postId){return 'forum_comments_'+postId;}
+async function openForumDetail(postId){
+    currentForumDetailPostId=Number(postId);
+    document.getElementById('page-forum-detail').classList.add('active');
+    showMainDock(false);
+    await renderForumDetailPost(postId);
+    document.getElementById('forum-comment-list').innerHTML='';
+    await refreshForumComments(postId);
+}
+function closeForumDetail(){document.getElementById('page-forum-detail').classList.remove('active');currentForumDetailPostId=null;}
+async function renderForumDetailPost(postId){
+    const posts=await getForumPosts();
+    const p=posts.find(x=>Number(x.id)===Number(postId));
+    document.getElementById('forum-detail-post').innerHTML=p?renderForumPost(Object.assign({},p,{detail:true})):'<div class="forum-empty">帖子不存在。</div>';
+}
+function renderForumComments(comments){
+    const box=document.getElementById('forum-comment-list');
+    if(!Array.isArray(comments)||!comments.length){box.innerHTML='<div class="forum-empty">暂无评论。</div>';return;}
+    box.innerHTML=comments.map(c=>`<div class="forum-comment-item"><div class="forum-avatar">${forumAvatarHtml(c.avatar,c.name)}</div><div class="forum-comment-body"><div class="forum-comment-head"><div class="forum-comment-name">${forumEscape(c.name||'路人')}</div><div class="forum-comment-date">${forumEscape(c.date||forumNowText())}</div></div><div class="forum-comment-text">${forumEscape(c.comment||'')}</div><div class="forum-comment-actions"><span>${forumIconSvg('comment')} 评论 ${Number(c.replyCount||0)}</span><span>${forumIconSvg('like')} 喜欢 ${Number(c.likeCount||0)}</span></div></div></div>`).join('');
+}
+async function refreshForumComments(postId){
+    if(!postId)return;
+    showForumLoading(true);
+    try{
+        const posts=await getForumPosts();
+        const p=posts.find(x=>Number(x.id)===Number(postId));
+        if(!p)throw new Error('帖子不存在');
+        const cfg=await dbGet('forum_config',{});
+        const promptText=`请根据帖子内容生成 8 到 12 条论坛详情页评论。只输出 JSON 数组。每项必须包含 name,date,comment,replyCount,likeCount。评论者是NPC路人，不要使用主帖作者。\n论坛世界观：${cfg.worldview||''}\n帖子作者：${p.author||''}\n帖子标题：${p.title||''}\n帖子正文：${p.body||''}`;
+        const raw=await callForumApi(promptText);
+        const match=raw.match(/\[[\s\S]*\]/);
+        const arr=JSON.parse(match?match[0]:raw);
+        if(!Array.isArray(arr))throw new Error('API 未返回数组');
+        const comments=arr.slice(0,16).map((x,i)=>({
+            name:x.name||x.author||('路人'+(i+1)),
+            avatar:x.avatar||'',
+            date:x.date||forumNowText(),
+            comment:x.comment||x.body||'',
+            replyCount:Number(x.replyCount||x.replies||Math.floor(Math.random()*5)),
+            likeCount:Number(x.likeCount||x.likes||Math.floor(Math.random()*60))
+        }));
+        await dbSet(forumCommentKey(postId),comments);
+        p.replies=comments.length;
+        await setForumPosts(posts);
+        renderForumComments(comments);
+        await renderForumDetailPost(postId);
+        await renderForumPosts();
+        await renderForumHot();
+        await renderForumMine();
+    }catch(e){
+        const old=await dbGet(forumCommentKey(postId),[]);
+        renderForumComments(old);
+        if(!old.length)document.getElementById('forum-comment-list').innerHTML='<div class="forum-empty">评论刷新失败，请检查聊天API配置后重试。<br>'+forumEscape(e.message)+'</div>';
+    }finally{
+        showForumLoading(false);
+    }
+}
 
 async function openForumCompose(){forumComposeImages=[];const m=await getForumMine();document.getElementById('forum-compose-avatar').innerHTML=forumAvatarHtml(m.avatar,m.name);document.getElementById('forum-compose-id').textContent=`${m.name} · @me`;document.getElementById('forum-compose-time').textContent=forumNowText();document.getElementById('forum-compose-title').value='';document.getElementById('forum-compose-content').value='';renderForumComposeImages();document.getElementById('page-forum-compose').classList.add('active');showMainDock(false);}
 function closeForumCompose(){document.getElementById('page-forum-compose').classList.remove('active');}
-function renderForumComposeImages(){const box=document.getElementById('forum-compose-images');box.innerHTML=forumComposeImages.map((x,i)=>`<div class="forum-compose-thumb">${x.type==='desc'?`<div class="forum-image-note">${forumEscape(x.content)}</div>`:`<img src="${x.content}">`}<button class="forum-compose-remove" onclick="removeForumComposeImage(${i})">×</button></div>`).join('');}
+function renderForumComposeImages(){const box=document.getElementById('forum-compose-images');box.innerHTML=forumComposeImages.map((x,i)=>`<div class="forum-compose-thumb">${x.type==='desc'?`<div class="forum-image-note">${forumEscape(x.content)}</div>`:`<img src="${x.content}">`}<button class="forum-compose-remove" onclick="removeForumComposeImage(${i})">x</button></div>`).join('');}
 function removeForumComposeImage(i){forumComposeImages.splice(i,1);renderForumComposeImages();}
 function addForumImageDescription(){if(forumComposeImages.length>=9)return alert('一条帖子最多添加9张图片');forumPrompt('添加文字描述图片','图片描述','',desc=>{if(!desc)return;forumComposeImages.push({type:'desc',content:desc});renderForumComposeImages();});}
 function handleForumImageFiles(e){const remain=9-forumComposeImages.length;const files=Array.from(e.target.files||[]).slice(0,remain);if(!files.length)return;if((e.target.files||[]).length>remain)alert('一条帖子最多添加9张图片，已自动截取前面的图片');let left=files.length;files.forEach(file=>{const r=new FileReader();r.onload=ev=>{forumComposeImages.push({type:'image',content:ev.target.result});left--;if(left===0)renderForumComposeImages();};r.readAsDataURL(file);});e.target.value='';}
 async function publishForumPost(){const title=document.getElementById('forum-compose-title').value.trim();const body=document.getElementById('forum-compose-content').value.trim();if(!title&&!body)return alert('请输入帖子标题或正文');const m=await getForumMine();const posts=await getForumPosts();posts.unshift({id:Date.now(),author:m.name,idText:'@me',time:forumNowText(),group:currentForumGroup,title:title||'无标题',body,images:[...forumComposeImages],likes:0,replies:0,reposts:0,mine:true,avatar:m.avatar});await setForumPosts(posts);closeForumCompose();await renderForumPosts();await renderForumHot();await renderForumMine();}
 
-async function callForumApi(promptText){let url=(await dbGet('chat_api_url','')).trim();const key=(await dbGet('chat_api_key','')).trim();const model=(await dbGet('chat_api_model','')).trim();const temperature=Number(await dbGet('chat_api_temperature',0.7));if(!url||!key||!model)throw new Error('请先在 设置 > 聊天API 中填写 API 网址、密钥和模型');if(!url.endsWith('/v1')&&!url.endsWith('/v1/'))url=url.replace(/\/$/,'')+'/v1';const res=await fetch(`${url}/chat/completions`,{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature,stream:false,messages:[{role:'system',content:'你是论坛帖子生成器，只输出 JSON 数组。每项包含 author,title,body,group,likes,replies,reposts。不要输出 Markdown。'},{role:'user',content:promptText}]})});if(!res.ok)throw new Error('API 请求失败：'+res.status);const data=await res.json();return data.choices?.[0]?.message?.content||'';}
-async function refreshForumPosts(){await saveForumConfig();const cfg=await dbGet('forum_config',{});const contacts=await getContacts();const selected=contacts.filter(c=>(cfg.selectedChars||[]).map(Number).includes(Number(c.id))).map(c=>forumContactName(c)+'：'+forumContactDetail(c)).join('\n');const wb=cfg.worldbookId?(await db.worldbook.get(Number(cfg.worldbookId))):null;const promptText=`请根据以下资料生成 6 条论坛帖子，分组只能从 ${forumGroups.join('、')} 中选择。\n世界观：${cfg.worldview||''}\n世界书：${wb?(wb.title+'\n'+(wb.content||'')):''}\nuser：${cfg.userName||''}\nuser设定：${cfg.userSetting||''}\n参与char：${selected}\n论坛NPC：${cfg.npc||''}\n关系网：${cfg.relationship||''}`;try{const raw=await callForumApi(promptText);const match=raw.match(/\[[\s\S]*\]/);const arr=JSON.parse(match?match[0]:raw);if(!Array.isArray(arr))throw new Error('API 未返回数组');const posts=await getForumPosts();const mapped=arr.slice(0,12).map((x,i)=>({id:Date.now()+i,author:x.author||'论坛NPC',idText:'@npc_'+(Date.now()+i),time:forumNowText(),group:forumGroups.includes(x.group)?x.group:currentForumGroup,title:x.title||'新帖',body:x.body||'',likes:Number(x.likes||Math.floor(Math.random()*100)),replies:Number(x.replies||Math.floor(Math.random()*20)),reposts:Number(x.reposts||Math.floor(Math.random()*8))}));await setForumPosts([...mapped,...posts]);await renderForumPosts();await renderForumHot();await renderForumMine();alert('论坛帖子已刷新');}catch(e){alert('刷新失败：'+e.message);}}
+async function callForumApi(promptText){let url=(await dbGet('chat_api_url','')).trim();const key=(await dbGet('chat_api_key','')).trim();const model=(await dbGet('chat_api_model','')).trim();const temperature=Number(await dbGet('chat_api_temperature',0.7));if(!url||!key||!model)throw new Error('请先在 设置 > 聊天API 中填写 API 网址、密钥和模型');if(!url.endsWith('/v1')&&!url.endsWith('/v1/'))url=url.replace(/\/$/,'')+'/v1';const res=await fetch(`${url}/chat/completions`,{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature,stream:false,messages:[{role:'system',content:'你是论坛内容生成器，只输出 JSON 数组。不要输出 Markdown。'},{role:'user',content:promptText}]})});if(!res.ok)throw new Error('API 请求失败：'+res.status);const data=await res.json();return data.choices?.[0]?.message?.content||'';}
+async function refreshForumPosts(){
+    showForumLoading(true);
+    await saveForumConfig();
+    const cfg=await dbGet('forum_config',{});
+    const contacts=await getContacts();
+    const selected=contacts.filter(c=>(cfg.selectedChars||[]).map(Number).includes(Number(c.id))).map(c=>forumContactName(c)+'：'+forumContactDetail(c)).join('\n');
+    const wb=cfg.worldbookId?(await db.worldbook.get(Number(cfg.worldbookId))):null;
+    const promptText=`请根据以下资料生成 6 条论坛帖子，分组只能从 ${forumGroups.join('、')} 中选择。\n世界观：${cfg.worldview||''}\n世界书：${wb?(wb.title+'\n'+(wb.content||'')):''}\nuser：${cfg.userName||''}\nuser设定：${cfg.userSetting||''}\n参与char：${selected}\n论坛NPC：${cfg.npc||''}\n关系网：${cfg.relationship||''}`;
+    try{
+        const raw=await callForumApi(promptText);
+        const match=raw.match(/\[[\s\S]*\]/);
+        const arr=JSON.parse(match?match[0]:raw);
+        if(!Array.isArray(arr))throw new Error('API 未返回数组');
+        const posts=await getForumPosts();
+        const mapped=arr.slice(0,12).map((x,i)=>({id:Date.now()+i,author:x.author||'论坛NPC',idText:'@npc_'+(Date.now()+i),time:forumNowText(),group:forumGroups.includes(x.group)?x.group:currentForumGroup,title:x.title||'新帖',body:x.body||'',likes:Number(x.likes||Math.floor(Math.random()*100)),replies:Number(x.replies||Math.floor(Math.random()*20)),reposts:Number(x.reposts||Math.floor(Math.random()*8)),heat:Number(x.heat||0)}));
+        await setForumPosts([...mapped,...posts]);
+        await renderForumPosts();
+        await renderForumHot();
+        await renderForumMine();
+    }catch(e){
+        alert('刷新失败：'+e.message);
+    }finally{
+        showForumLoading(false);
+    }
+}
 
 
         loadUserData();
@@ -2470,7 +2575,7 @@ async function refreshForumPosts(){await saveForumConfig();const cfg=await dbGet
 // ========== [PWA] 注册 Service Worker ==========
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
+        navigator.serviceWorker.register('./sw.js').catch(function (err) {
             console.warn('Service Worker 注册失败：', err);
         });
     });

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,7 @@
             </div>
             <div id="chat-plus-menu" class="chat-plus-menu">
                 <div class="chat-plus-menu-item" onclick="openDirectChatFromPlus()">
-                    <span class="chat-plus-menu-icon">＋</span><span>发起聊天</span>
+                    <span class="chat-plus-menu-icon">+</span><span>发起聊天</span>
                 </div>
                 <div class="chat-plus-menu-item" onclick="openGroupChatFromPlus()">
                     <span class="chat-plus-menu-icon">群</span><span>发起群聊</span>
@@ -818,6 +818,7 @@
                 </div>
             </div>
             <div class="forum-main-shell">
+                <div id="forum-loading" class="forum-loading" aria-hidden="true"><div class="forum-loading-card"><div class="forum-spinner"></div><div>正在刷新</div></div></div>
                 <div id="forum-management-panel" class="forum-management-panel">
                     <div class="forum-preset-row">
                         <select id="forum-preset-select" class="forum-select" onchange="loadForumPreset()"><option value="">选择论坛预设</option></select>
@@ -858,6 +859,20 @@
                 <textarea id="forum-compose-content" class="forum-textarea" placeholder="正文，不限制字数" style="min-height:180px;"></textarea>
                 <div class="forum-compose-grid" id="forum-compose-images"></div>
                 <div class="forum-inline-row" style="margin-top:12px;"><button class="forum-mini-btn" onclick="addForumImageDescription()"><svg viewBox="0 0 24 24"><path d="M20 5h-3.17L15 3H9L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-8 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg><span style="margin-left:4px;">相机</span></button><button class="forum-mini-btn" onclick="document.getElementById('forum-image-file').click()"><svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 11.5l2.5 3.01L14.5 10l4.5 6H5z"/></svg><span style="margin-left:4px;">图片</span></button><input id="forum-image-file" class="forum-hidden-input" type="file" accept="image/*" multiple onchange="handleForumImageFiles(event)"></div>
+            </div>
+        </div>
+
+        <!-- ========== [FORUM-DETAIL] 帖子详情页面 ========== -->
+        <div id="page-forum-detail" class="page forum-page">
+            <div class="forum-ios-nav">
+                <button class="forum-icon-btn forum-back-btn" onclick="closeForumDetail()" aria-label="返回"><svg viewBox="0 0 24 24"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg></button>
+                <div class="forum-ios-title">帖子详情</div>
+                <div class="forum-top-actions"><button class="forum-icon-btn" onclick="refreshForumComments(currentForumDetailPostId)" aria-label="刷新评论"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h8V3z"/></svg></button></div>
+            </div>
+            <div class="forum-detail-shell">
+                <div id="forum-detail-post"></div>
+                <div class="forum-comment-title">评论</div>
+                <div id="forum-comment-list"></div>
             </div>
         </div>
 

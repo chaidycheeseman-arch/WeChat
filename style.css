@@ -1337,3 +1337,130 @@
 }
 .forum-ios-nav .forum-mini-btn { padding: 0 13px; }
 .forum-ios-title { max-width: 54%; }
+
+
+/* ========== [FORUM-DETAIL-REFRESH-FIX] 论坛导航、刷新、详情、评论 ========== */
+.forum-page{
+    top:42px;
+    height:calc(100vh - 42px);
+    max-height:calc(100vh - 42px);
+}
+.forum-ios-nav{
+    height:54px;
+    padding-top:0;
+    padding-left:58px;
+    padding-right:96px;
+    overflow:visible;
+}
+.forum-back-btn,
+.forum-top-actions{
+    top:50%;
+    bottom:auto;
+    transform:translateY(-50%);
+}
+.forum-icon-btn,.forum-mini-btn{
+    border:.5px solid rgba(0,0,0,.08);
+    background:#f6f6f7;
+    box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+.forum-loading{
+    position:absolute;
+    inset:0;
+    z-index:80;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+}
+.forum-loading.show{display:flex;}
+.forum-loading-card{
+    min-width:116px;
+    min-height:96px;
+    padding:18px 20px;
+    border-radius:22px;
+    background:#fff;
+    border:.5px solid var(--forum-line);
+    box-shadow:0 16px 40px rgba(0,0,0,.12);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    font-size:13px;
+    font-weight:800;
+    color:#111;
+}
+.forum-spinner{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    border:3px solid #e6e6e8;
+    border-top-color:#000;
+    animation:forumSpin .8s linear infinite;
+}
+@keyframes forumSpin{to{transform:rotate(360deg);}}
+.forum-post{cursor:pointer;}
+.forum-post-actions{justify-content:flex-start;gap:10px;flex-wrap:wrap;}
+.forum-action-btn{
+    border:0;
+    background:transparent;
+    color:var(--forum-muted);
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    min-height:28px;
+    padding:2px 2px;
+    font-size:12px;
+    font-weight:800;
+}
+.forum-action-btn svg{
+    width:17px;
+    height:17px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.9;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+}
+.forum-action-btn:active{color:#000;}
+.forum-detail-shell{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    background:#fff;
+    padding-bottom:26px;
+}
+#forum-detail-post .forum-post{
+    border-bottom:8px solid var(--forum-soft);
+}
+.forum-comment-title{
+    padding:14px 16px 8px;
+    font-size:15px;
+    font-weight:900;
+    color:#111;
+}
+.forum-comment-item{
+    display:flex;
+    gap:10px;
+    padding:13px 14px 12px;
+    border-bottom:.5px solid var(--forum-line);
+    background:#fff;
+}
+.forum-comment-body{flex:1;min-width:0;}
+.forum-comment-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.forum-comment-name{font-size:14px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.forum-comment-date{font-size:11px;color:var(--forum-muted);white-space:nowrap;}
+.forum-comment-text{font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:#111;}
+.forum-comment-actions{display:flex;gap:16px;margin-top:8px;color:var(--forum-muted);font-size:12px;font-weight:780;}
+.forum-comment-actions span{display:inline-flex;align-items:center;gap:4px;}
+.forum-comment-actions svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+/* ========== [FORUM-LOADING-GLOBAL] 刷新层覆盖论坛所有子页面 ========== */
+.forum-loading{
+    position:fixed;
+    top:42px;
+    left:0;
+    right:0;
+    bottom:0;
+}
