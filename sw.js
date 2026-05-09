@@ -7,8 +7,8 @@ const ASSETS = [
   './manifest.webmanifest',
   './sw.js',
   './service-worker.js',
-  './icon-192.png',
-  './icon-512.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js'
 ];
 
